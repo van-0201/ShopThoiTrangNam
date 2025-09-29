@@ -20,7 +20,10 @@
         <header>
             <nav class="navbar navbar-expand-lg navbar-dark bg-black">
                 <div class="container">
-                    <a class="navbar-brand" asp-area="" asp-page="/Index">Shop Thời Trang Nam</a>
+                    <a class="navbar-brand d-flex align-items-center" asp-area="" asp-page="/Index">
+                        <img src="~/Icons/IconLogo.png" alt="Logo" style="height:40px; width:auto; margin-right:8px;" />
+                        Shop Thời Trang Nam
+                    </a>
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                         <span class="navbar-toggler-icon"></span>
                     </button>
@@ -33,7 +36,7 @@
                             <li class="nav-item"><a class="nav-link" asp-area="" asp-page="/Contact">Liên hệ</a></li>
                         </ul>
 
-                        <!-- Thanh tìm kiếm + login/register -->
+                        <!-- Thanh tìm kiếm + login/register + giỏ hàng -->
                         <div class="d-flex align-items-center">
                             <form class="d-flex me-3" role="search">
                                 <input class="form-control me-2" type="search" placeholder="Tìm sản phẩm" />
@@ -54,6 +57,13 @@
                                 <a class="btn btn-outline-light me-2" href="/Identity/Account/Login">Đăng nhập</a>
                                 <a class="btn btn-outline-light me-2" href="/Identity/Account/Register">Đăng ký</a>
                             }
+
+                            <a class="btn btn-outline-warning position-relative" href="/Cart">
+                                <img src="~/Icons/IconGioHang.png" alt="Cart" style="width:20px; height:20px;" />
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    @ViewBag.CartCount 0
+                                </span>
+                            </a>
                         </div>
                     </div>
                 </div>

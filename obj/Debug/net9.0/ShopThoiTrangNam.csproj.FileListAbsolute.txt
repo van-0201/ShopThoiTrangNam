@@ -263,6 +263,7 @@ D:\WebShopThoiTrangNam\ShopThoiTrangNam\obj\Debug\net9.0\ShopThoiTrangNam.MvcApp
 D:\WebShopThoiTrangNam\ShopThoiTrangNam\obj\Debug\net9.0\ShopThoiTrangNam.MvcApplicationPartsAssemblyInfo.cache
 D:\WebShopThoiTrangNam\ShopThoiTrangNam\obj\Debug\net9.0\ShopThoiTrangNam.RazorAssemblyInfo.cache
 D:\WebShopThoiTrangNam\ShopThoiTrangNam\obj\Debug\net9.0\ShopThoiTrangNam.RazorAssemblyInfo.cs
+D:\WebShopThoiTrangNam\ShopThoiTrangNam\obj\Debug\net9.0\ShopThoiTrangNam.sourcelink.json
 D:\WebShopThoiTrangNam\ShopThoiTrangNam\obj\Debug\net9.0\rjimswa.dswa.cache.json
 D:\WebShopThoiTrangNam\ShopThoiTrangNam\obj\Debug\net9.0\rjsmrazor.dswa.cache.json
 D:\WebShopThoiTrangNam\ShopThoiTrangNam\obj\Debug\net9.0\rjsmcshtml.dswa.cache.json
