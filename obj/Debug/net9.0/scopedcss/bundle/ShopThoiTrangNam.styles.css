@@ -1,0 +1,50 @@
+/* _content/ShopThoiTrangNam/Views/Shared/_Layout.cshtml.rz.scp.css */
+/* Footer */
+.footer[b-gc0ga6eaz6] {
+    background-color: #222;
+    color: #eee;
+    padding-top: 40px;
+    padding-bottom: 20px;
+}
+
+.footer h5[b-gc0ga6eaz6] {
+    color: #fff;
+    margin-bottom: 15px;
+}
+
+.footer a.footer-link[b-gc0ga6eaz6] {
+    color: #ccc;
+    text-decoration: none;
+}
+
+.footer a.footer-link:hover[b-gc0ga6eaz6] {
+    color: #fff;
+    text-decoration: underline;
+}
+
+/* Navbar */
+.navbar-brand[b-gc0ga6eaz6] {
+    font-size: 1.5rem;
+}
+
+.nav-link[b-gc0ga6eaz6] {
+    font-size: 1rem;
+}
+
+.navbar-nav .dropdown-menu[b-gc0ga6eaz6] {
+    min-width: 180px;
+}
+
+/* Body / Layout */
+html[b-gc0ga6eaz6], body[b-gc0ga6eaz6] {
+    height: 100%;
+}
+
+body[b-gc0ga6eaz6] {
+    display: flex;
+    flex-direction: column;
+}
+
+main.flex-grow-1[b-gc0ga6eaz6] {
+    flex-grow: 1;
+}
