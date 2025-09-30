@@ -12,23 +12,27 @@ namespace ShopThoiTrangNam.Models
 
         [Required]
         [StringLength(200)]
-        public string ProductName { get; set; }
+        public string? ProductName { get; set; }
 
         public int CategoryId { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal Price { get; set; }
 
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         public int StockQuantity { get; set; }
 
         [MaxLength(250)]
-        public string ImageUrl { get; set; }    
+        public string? ImageUrl { get; set; }    
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-        public Category Category { get; set; }
+        public Category? Category { get; set; }
+
+        public string? Size { get; set; }
+
+        public string? Color { get; set; }
 
         public ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
         public ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();

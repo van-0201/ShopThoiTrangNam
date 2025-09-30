@@ -12,10 +12,10 @@ namespace ShopThoiTrangNam.Models
 
         [Required]
         [MaxLength(250)]
-        public string ImageUrl { get; set; }
+        public string? ImageUrl { get; set; }
 
         public bool IsPrimary { get; set; } = false;
 
-        public Product Product { get; set; }
+        public Product? Product { get; set; }
     }
 }

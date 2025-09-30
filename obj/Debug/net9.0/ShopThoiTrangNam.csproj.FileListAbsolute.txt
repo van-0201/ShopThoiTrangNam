@@ -394,8 +394,8 @@ D:\WebShopThoiTrangNam\ShopThoiTrangNam\obj\Debug\net9.0\compressed\crcjup9mqf-2
 D:\WebShopThoiTrangNam\ShopThoiTrangNam\obj\Debug\net9.0\compressed\ifz89jlnyz-muycvpuwrr.gz
 D:\WebShopThoiTrangNam\ShopThoiTrangNam\obj\Debug\net9.0\compressed\immqua65h2-87fc7y1x7t.gz
 D:\WebShopThoiTrangNam\ShopThoiTrangNam\obj\Debug\net9.0\compressed\xfwm2ja8d1-mlv21k5csn.gz
-D:\WebShopThoiTrangNam\ShopThoiTrangNam\obj\Debug\net9.0\compressed\0ajb5i88og-24k27ee2kp.gz
-D:\WebShopThoiTrangNam\ShopThoiTrangNam\obj\Debug\net9.0\compressed\drhayivrz2-24k27ee2kp.gz
+D:\WebShopThoiTrangNam\ShopThoiTrangNam\obj\Debug\net9.0\compressed\0ajb5i88og-9loc7m3okj.gz
+D:\WebShopThoiTrangNam\ShopThoiTrangNam\obj\Debug\net9.0\compressed\drhayivrz2-9loc7m3okj.gz
 D:\WebShopThoiTrangNam\ShopThoiTrangNam\obj\Debug\net9.0\staticwebassets.build.json
 D:\WebShopThoiTrangNam\ShopThoiTrangNam\obj\Debug\net9.0\staticwebassets.build.json.cache
 D:\WebShopThoiTrangNam\ShopThoiTrangNam\obj\Debug\net9.0\staticwebassets.development.json

@@ -56,7 +56,7 @@ namespace ShopThoiTrangNam.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ProductId,ProductName,CategoryId,Price,Description,StockQuantity,ImageUrl,CreatedAt")] Product product)
+        public async Task<IActionResult> Create([Bind("ProductId,ProductName,CategoryId,Price,Description,StockQuantity,ImageUrl,CreatedAt,Size,Color")] Product product)
         {
             if (ModelState.IsValid)
             {
@@ -90,7 +90,7 @@ namespace ShopThoiTrangNam.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ProductId,ProductName,CategoryId,Price,Description,StockQuantity,ImageUrl,CreatedAt")] Product product)
+        public async Task<IActionResult> Edit(int id, [Bind("ProductId,ProductName,CategoryId,Price,Description,StockQuantity,ImageUrl,CreatedAt,Size,Color")] Product product)
         {
             if (id != product.ProductId)
             {
