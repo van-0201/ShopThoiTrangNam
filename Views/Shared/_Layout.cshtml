@@ -54,10 +54,12 @@
 
                             @if (User?.Identity?.IsAuthenticated == true) 
                             {
-                                <span class="navbar-text me-2">
+                                <span class="navbar-text me-3">
                                     Hello, @User.Identity.Name!
                                 </span>
-                                <form method="post" asp-area="Identity" asp-page="/Account/Logout" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn đăng xuất?');">
+                                <form method="post" asp-area="Identity" asp-page="/Account/Logout" 
+                                    class="d-inline me-3" 
+                                    onsubmit="return confirm('Bạn có chắc muốn đăng xuất?');">
                                     <button type="submit" class="btn btn-outline-light">Logout</button>
                                 </form>
                             }
