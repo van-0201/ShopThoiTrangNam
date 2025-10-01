@@ -28,7 +28,7 @@ using (var scope = app.Services.CreateScope())
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
     // Create Roles
-    string[] roleNames = { "Admin", "Staff", "Customer" };
+    string[] roleNames = { "Admin", "Customer" };
     foreach (var roleName in roleNames)
     {
         if (!await roleManager.RoleExistsAsync(roleName))
@@ -54,24 +54,10 @@ using (var scope = app.Services.CreateScope())
             await userManager.AddToRoleAsync(adminUser, "Admin");
     }
 
-    /*// Create Staff User
-    var staffEmail = "staff@shop.com";
-    var staffUser = await userManager.FindByEmailAsync(staffEmail);
-    if (staffUser == null)
-    {
-        staffUser = new ApplicationUser
-        {
-            UserName = staffEmail,
-            Email = staffEmail,
-            EmailConfirmed = true
-        };
-        var result = await userManager.CreateAsync(staffUser, "Staff@123");
-        if (result.Succeeded)
-            await userManager.AddToRoleAsync(staffUser, "Staff");
-    }
 
     // Create Customer User
-    var customerEmail = "customer@shop.com";
+    var customerEmail = builder.Configuration["CustomerCredentials:Email"];
+    var customerPassword = builder.Configuration["CustomerCredentials:Password"];
     var customerUser = await userManager.FindByEmailAsync(customerEmail);
     if (customerUser == null)
     {
@@ -81,10 +67,10 @@ using (var scope = app.Services.CreateScope())
             Email = customerEmail,
             EmailConfirmed = true
         };
-        var result = await userManager.CreateAsync(customerUser, "Customer@123");
+        var result = await userManager.CreateAsync(customerUser, customerPassword);
         if (result.Succeeded)
             await userManager.AddToRoleAsync(customerUser, "Customer");
-    }*/
+    }
 }
 
 // Configure the HTTP request pipeline.

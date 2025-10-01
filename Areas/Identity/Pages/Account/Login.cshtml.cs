@@ -116,7 +116,7 @@ namespace ShopThoiTrangNam.Areas.Identity.Pages.Account
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User logged in.");
-                    return LocalRedirect(returnUrl);
+                    return RedirectToAction("Index", "Home"); // Redirect to the Home controller's Index action
                 }
                 if (result.RequiresTwoFactor)
                 {

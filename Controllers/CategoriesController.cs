@@ -48,6 +48,11 @@ namespace ShopThoiTrangNam.Controllers
         public IActionResult Create()
         {
             ViewData["ParentId"] = new SelectList(_context.Categories, "CategoryId", "CategoryName");
+            ViewBag.NoParentOption = new SelectListItem()
+            {
+                Value = "",
+                Text = "Không có danh mục cha"
+            };
             return View();
         }
 
@@ -82,6 +87,11 @@ namespace ShopThoiTrangNam.Controllers
                 return NotFound();
             }
             ViewData["ParentId"] = new SelectList(_context.Categories, "CategoryId", "CategoryName", category.ParentId);
+            ViewBag.NoParentOption = new SelectListItem()
+            {
+                Value = "",
+                Text = "Không có danh mục cha"
+            };
             return View(category);
         }
 

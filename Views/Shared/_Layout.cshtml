@@ -11,7 +11,6 @@
     <!-- Site CSS -->
     <link rel="stylesheet" href="~/css/site.css" />
 
-    <!-- Section Styles cho các page có CSS riêng -->
     @RenderSection("Styles", required: false)
 </head>
 <body>
@@ -25,56 +24,102 @@
                         <img src="~/Icons/IconLogo.png" alt="Logo" style="height:40px; width:auto; margin-right:8px;" />
                         Shop Thời Trang Nam
                     </a>
+
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                         <span class="navbar-toggler-icon"></span>
                     </button>
+
                     <div class="collapse navbar-collapse" id="navbarNav">
                         <!-- Menu chính -->
                         <ul class="navbar-nav me-auto">
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Home" asp-action="Index">Trang chủ</a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Products" asp-action="Index">Sản phẩm</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Home" asp-action="About">Giới thiệu</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Home" asp-action="Contact">Liên hệ</a>
-                            </li>
-                        </ul>
 
-                        <!-- Thanh tìm kiếm + login/register + giỏ hàng -->
-                        <div class="d-flex align-items-center">
-                            <form class="d-flex me-3" role="search">
-                                <input class="form-control me-2" type="search" placeholder="Tìm sản phẩm" />
-                                <button class="btn btn-outline-success" type="submit">Tìm</button>
-                            </form>
-
-                            @if (User?.Identity?.IsAuthenticated == true) 
+                            @if (User?.IsInRole("Admin") == true)
                             {
-                                <span class="navbar-text me-3">
-                                    Hello, @User.Identity.Name!
-                                </span>
-                                <form method="post" asp-area="Identity" asp-page="/Account/Logout" 
-                                    class="d-inline me-3" 
-                                    onsubmit="return confirm('Bạn có chắc muốn đăng xuất?');">
-                                    <button type="submit" class="btn btn-outline-light">Logout</button>
-                                </form>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Products" asp-action="Index">Sản phẩm</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Categories" asp-action="Index">Danh mục</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="">Quản lý user</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="">Quản lý đơn hàng</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="">Báo cáo</a>
+                                </li>
                             }
                             else
                             {
-                                <a class="btn btn-outline-light me-2" asp-area="Identity" asp-page="/Account/Login">Đăng nhập</a>
-                                <a class="btn btn-outline-light me-2" asp-area="Identity" asp-page="/Account/Register">Đăng ký</a>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="">Sản phẩm</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="">Giới thiệu</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="">Liên hệ</a>
+                                </li>
+                            }
+                        </ul>
+
+                        <!-- Thanh tìm kiếm + Menu người dùng + Giỏ hàng -->
+                        <div class="d-flex align-items-center">
+                            @if (User?.IsInRole("Customer") == true)
+                            {
+                                <form class="d-flex me-3" role="search">
+                                    <input class="form-control me-2" type="search" placeholder="Tìm sản phẩm" />
+                                    <button class="btn btn-outline-success" type="submit">Tìm</button>
+                                </form>
                             }
 
-                            <a class="btn btn-outline-warning position-relative" asp-controller="Cart" asp-action="Index">
-                                <img src="~/Icons/IconGioHang.png" alt="Cart" style="width:20px; height:20px;" />
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                    @ViewBag.CartCount 0
-                                </span>
-                            </a>
+                            <!-- Menu người dùng -->
+                            <div class="dropdown me-3">
+                                <a class="d-flex align-items-center btn btn-outline-light dropdown-toggle" href="#" role="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <img src="~/Icons/IconAccount.png" alt="Account" class="rounded-circle" style="width:32px; height:32px; object-fit:cover;" />
+                                    @if (User?.Identity?.IsAuthenticated == true)
+                                    {
+                                        <span class="ms-2">Hello, @User.Identity.Name!</span>
+                                    }
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuDropdown">
+                                    @if (User?.Identity?.IsAuthenticated == true)
+                                    {
+                                        @if (User.IsInRole("Customer"))
+                                        {
+                                            <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index">Thông tin cá nhân</a></li>
+                                            <li><a class="dropdown-item" href="">Đơn hàng</a></li>
+                                            <li><hr class="dropdown-divider" /></li>
+                                        }
+                                        <li>
+                                            <form method="post" asp-area="Identity" asp-page="/Account/Logout" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn đăng xuất?');">
+                                                <button type="submit" class="dropdown-item">Đăng xuất</button>
+                                            </form>
+                                        </li>
+                                    }
+                                    else
+                                    {
+                                        <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Login">Đăng nhập</a></li>
+                                        <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Register">Đăng ký</a></li>
+                                    }
+                                </ul>
+                            </div>
+
+                            <!-- Giỏ hàng -->
+                            @if (User?.IsInRole("Customer") == true)
+                            {
+                                <a class="btn btn-outline-warning position-relative" asp-controller="Cart" asp-action="Index">
+                                    <img src="~/Icons/IconGioHang.png" alt="Cart" style="width:20px; height:20px;" />
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                        @ViewBag.CartCount 0
+                                    </span>
+                                </a>
+                            }
                         </div>
                     </div>
                 </div>
@@ -94,8 +139,6 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Section Scripts cho các page có JS riêng -->
     @RenderSection("Scripts", required: false)
 </body>
 </html>

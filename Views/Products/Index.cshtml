@@ -4,10 +4,10 @@
     ViewData["Title"] = "Index";
 }
 
-<h1>Index</h1>
+<h1>Quản lý sản phẩm</h1>
 
 <p>
-    <a asp-action="Create">Create New</a>
+    <a class="btn btn-outline-success mt-auto" asp-action="Create">Thêm sản phẩm mới</a>
 </p>
 <table class="table">
     <thead>
@@ -73,9 +73,9 @@
                 @Html.DisplayFor(modelItem => item.Color)
             </td>
             <td>
-                <a asp-action="Edit" asp-route-id="@item.ProductId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.ProductId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.ProductId">Delete</a>
+                <a class="btn btn-dark btn-sm my-1" asp-action="Details" asp-route-id="@item.ProductId">Chi tiết</a>
+                <a class="btn btn-warning btn-sm my-1" asp-action="Edit" asp-route-id="@item.ProductId">Sửa</a>
+                <a class="btn btn-danger btn-sm my-1" asp-action="Delete" asp-route-id="@item.ProductId">Xóa</a>
             </td>
         </tr>
 }

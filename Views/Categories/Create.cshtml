@@ -4,7 +4,7 @@
     ViewData["Title"] = "Create";
 }
 
-<h1>Create</h1>
+<h1>Tạo danh mục mới</h1>
 
 <h4>Category</h4>
 <hr />
@@ -19,7 +19,9 @@
             </div>
             <div class="form-group">
                 <label asp-for="ParentId" class="control-label"></label>
-                <select asp-for="ParentId" class ="form-control" asp-items="ViewBag.ParentId"></select>
+                <select asp-for="ParentId" class ="form-control" asp-items="ViewBag.ParentId">
+                    <option value="">@ViewBag.NoParentOption.Text</option>
+                </select>
             </div>
             <div class="form-group">
                 <label asp-for="Description" class="control-label"></label>
@@ -27,14 +29,14 @@
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+                <input type="submit" value="Tạo" class="btn btn-primary my-1" />
             </div>
         </form>
     </div>
 </div>
 
 <div>
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="Index" class="btn btn-secondary mb-1">Quay về danh sách</a>
 </div>
 
 @section Scripts {
