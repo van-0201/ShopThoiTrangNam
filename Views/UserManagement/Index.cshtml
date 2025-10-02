@@ -1,0 +1,38 @@
+@model IEnumerable<(ShopThoiTrangNam.Models.ApplicationUser User, IList<string> Roles)>
+
+@{
+    ViewData["Title"] = "User Management";
+}
+
+<h2>Danh sách người dùng</h2>
+
+<a asp-action="Create" class="btn btn-outline-success mt-auto mb-1">Thêm User</a>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Email</th>
+            <th>Roles</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.User.Email</td>
+                <td>@string.Join(", ", item.Roles)</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.User.Id" class="btn btn-dark btn-sm my-1">Details</a>
+                    <a asp-action="Edit" asp-route-id="@item.User.Id" class="btn btn-warning btn-sm">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@item.User.Id" class="btn btn-danger btn-sm">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

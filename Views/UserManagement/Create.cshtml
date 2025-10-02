@@ -1,0 +1,32 @@
+@{
+    ViewData["Title"] = "Create User";
+    var roles = ViewBag.Roles as List<string>;
+}
+
+<h2>Thêm User mới</h2>
+
+<!-- Hiển thị lỗi Identity -->
+<div asp-validation-summary="All" class="text-danger"></div>
+
+<form asp-action="Create" method="post">
+    <div class="form-group">
+        <label>Email</label>
+        <input type="email" name="email" class="form-control" required />
+    </div>
+    <div class="form-group">
+        <label>Mật khẩu</label>
+        <input type="password" name="password" class="form-control" required />
+    </div>
+    <div class="form-group">
+        <label>Role</label>
+        <select name="role" class="form-control">
+            <option value="">-- Chọn role --</option>
+            @foreach (var role in roles)
+            {
+                <option value="@role">@role</option>
+            }
+        </select>
+    </div>
+    <button type="submit" class="btn btn-success my-1">Tạo</button>
+    <a asp-action="Index" class="btn btn-secondary my-1">Quay lại</a>
+</form>

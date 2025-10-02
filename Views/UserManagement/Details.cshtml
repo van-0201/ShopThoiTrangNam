@@ -1,0 +1,14 @@
+@model ShopThoiTrangNam.Models.ApplicationUser
+
+@{
+    ViewData["Title"] = "User Details";
+    var roles = ViewBag.Roles as IList<string>;
+}
+
+<h2>Chi tiết User</h2>
+
+<p><strong>Email:</strong> @Model.Email</p>
+<p><strong>Roles:</strong> @(roles != null && roles.Any() ? string.Join(", ", roles) : "Không có")</p>
+
+<a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Edit</a>
+<a asp-action="Index" class="btn btn-secondary">Quay lại</a>
