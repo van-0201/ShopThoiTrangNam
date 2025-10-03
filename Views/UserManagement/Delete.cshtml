@@ -8,7 +8,8 @@
 
 <p>Bạn có chắc chắn muốn xóa user: <strong>@Model.Email</strong> ?</p>
 
-<form asp-action="DeleteConfirmed" method="post">
+<form asp-action="DeleteConfirmed" method="post" 
+      onsubmit="return confirm('Bạn có chắc muốn xóa user này?');">
     <input type="hidden" name="id" value="@Model.Id" />
     <button type="submit" class="btn btn-danger">Xóa</button>
     <a asp-action="Index" class="btn btn-secondary">Hủy</a>
