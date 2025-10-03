@@ -5,40 +5,39 @@
 }
 
 <h1>Chỉnh sửa danh mục</h1>
-
-<h4>Category</h4>
 <hr />
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
+    <div class="col-md-6">
+        <form asp-action="Edit" method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="CategoryId" />
-            <div class="form-group">
+
+            <div class="form-group mb-3">
                 <label asp-for="CategoryName" class="control-label"></label>
                 <input asp-for="CategoryName" class="form-control" />
                 <span asp-validation-for="CategoryName" class="text-danger"></span>
             </div>
-            <div class="form-group">
+
+            <div class="form-group mb-3">
                 <label asp-for="ParentId" class="control-label"></label>
                 <select asp-for="ParentId" class="form-control" asp-items="ViewBag.ParentId">
-                    <option value="">@ViewBag.NoParentOption.Text</option>
+                    <option value="">-- Không có danh mục cha --</option>
                 </select>
                 <span asp-validation-for="ParentId" class="text-danger"></span>
             </div>
-            <div class="form-group">
+
+            <div class="form-group mb-3">
                 <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
+                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <input type="submit" value="Lưu" class="btn btn-primary my-1" />
+                <a asp-action="Index" class="btn btn-secondary my-1">Quay về danh sách</a>
             </div>
         </form>
     </div>
-</div>
-
-<div>
-    <a class="btn btn-secondary mb-1" asp-action="Index">Quay về danh sách</a>
 </div>
 
 @section Scripts {

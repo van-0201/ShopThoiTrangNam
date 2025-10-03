@@ -1,36 +1,23 @@
 @model ShopThoiTrangNam.Models.Category
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Chi tiết danh mục";
 }
 
-<h1>Chi tiết danh mục</h1>
+<h1>@ViewData["Title"]</h1>
+<hr />
+
+<dl class="row">
+    <dt class="col-sm-2">@Html.DisplayNameFor(model => model.CategoryName)</dt>
+    <dd class="col-sm-10">@Html.DisplayFor(model => model.CategoryName)</dd>
+
+    <dt class="col-sm-2">@Html.DisplayNameFor(model => model.Description)</dt>
+    <dd class="col-sm-10">@Html.DisplayFor(model => model.Description)</dd>
+
+    <dt class="col-sm-2">Danh mục cha</dt>
+</dl>
 
 <div>
-    <h4>Category</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CategoryName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CategoryName)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.parent)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.parent.CategoryName)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.CategoryId" class="btn btn-warning my-1">Sửa</a> 
-    <a asp-action="Index" class="btn btn-secondary">Quay về danh sách</a>
+    <a class="btn btn-warning btn-sm" asp-action="Edit" asp-route-id="@Model.CategoryId">Sửa</a>
+    <a class="btn btn-secondary" asp-action="Index">Quay về danh sách</a>
 </div>

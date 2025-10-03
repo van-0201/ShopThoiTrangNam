@@ -12,33 +12,21 @@
 <table class="table">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.CategoryName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Description)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.parent)
-            </th>
+            <th>@Html.DisplayNameFor(model => model.CategoryName)</th>
+            <th>@Html.DisplayNameFor(model => model.Description)</th>
+            <th>@Html.DisplayNameFor(model => model.Parent)</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
 @foreach (var item in Model) {
         <tr>
+            <td>@Html.DisplayFor(modelItem => item.CategoryName)</td>
+            <td>@Html.DisplayFor(modelItem => item.Description)</td>
+            <td>@item.Parent?.CategoryName</td>
             <td>
-                @Html.DisplayFor(modelItem => item.CategoryName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Description)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.parent.CategoryName)
-            </td>
-            <td>
-                <a class="btn btn-dark btn-sm my-1" asp-action="Edit" asp-route-id="@item.CategoryId">Sửa</a> 
-                <a class="btn btn-warning btn-sm my-1" asp-action="Details" asp-route-id="@item.CategoryId">Chi tiết</a> 
+                <a class="btn btn-warning btn-sm my-1" asp-action="Edit" asp-route-id="@item.CategoryId">Sửa</a>
+                <a class="btn btn-dark btn-sm my-1" asp-action="Details" asp-route-id="@item.CategoryId">Chi tiết</a>
                 <a class="btn btn-danger btn-sm my-1" asp-action="Delete" asp-route-id="@item.CategoryId">Xóa</a>
             </td>
         </tr>

@@ -4,7 +4,7 @@
     ViewData["Title"] = "Edit";
 }
 
-<h1>Chỉnh sửa thông tin</h1>
+<h1>Chỉnh sửa thông tin sản phẩm</h1>
 
 <h4>Product</h4>
 <hr />
@@ -13,51 +13,61 @@
         <form asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="ProductId" />
+
             <div class="form-group">
                 <label asp-for="ProductName" class="control-label"></label>
                 <input asp-for="ProductName" class="form-control" />
                 <span asp-validation-for="ProductName" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label asp-for="CategoryId" class="control-label"></label>
                 <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.CategoryId"></select>
                 <span asp-validation-for="CategoryId" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label asp-for="Price" class="control-label"></label>
                 <input asp-for="Price" class="form-control" />
                 <span asp-validation-for="Price" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
+                <textarea asp-for="Description" class="form-control"></textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label asp-for="StockQuantity" class="control-label"></label>
                 <input asp-for="StockQuantity" class="form-control" />
                 <span asp-validation-for="StockQuantity" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label asp-for="ImageUrl" class="control-label"></label>
                 <input asp-for="ImageUrl" class="form-control" />
                 <span asp-validation-for="ImageUrl" class="text-danger"></span>
             </div>
+
+            @* Chỉ hiển thị ngày tạo, không cho sửa *@
             <div class="form-group">
                 <label asp-for="CreatedAt" class="control-label"></label>
-                <input asp-for="CreatedAt" class="form-control" />
-                <span asp-validation-for="CreatedAt" class="text-danger"></span>
+                <input asp-for="CreatedAt" class="form-control" readonly />
             </div>
+
             <div class="form-group">
                 <label asp-for="Size" class="control-label"></label>
                 <input asp-for="Size" class="form-control" />
                 <span asp-validation-for="Size" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label asp-for="Color" class="control-label"></label>
                 <input asp-for="Color" class="form-control" />
                 <span asp-validation-for="Color" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <input type="submit" value="Lưu" class="btn btn-primary my-1" />
             </div>
