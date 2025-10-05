@@ -19,10 +19,18 @@ namespace ShopThoiTrangNam.Controllers
         }
 
         // GET: Products
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? categoryId)
         {
-            var applicationDbContext = _context.Products.Include(p => p.Category);
-            return View(await applicationDbContext.ToListAsync());
+            ViewBag.Categories = await _context.Categories.ToListAsync();
+
+            var products = _context.Products.Include(p => p.Category).AsQueryable();
+
+            if (categoryId.HasValue)
+            {
+                products = products.Where(p => p.CategoryId == categoryId);
+            }
+
+            return View(await products.ToListAsync());
         }
 
         // GET: Products/Details/5
