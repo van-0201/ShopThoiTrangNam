@@ -46,6 +46,10 @@ namespace ShopThoiTrangNam.Models
         [StringLength(50, ErrorMessage = "Màu sắc không được vượt quá 50 ký tự")]
         public string? Color { get; set; }
 
+        //[Required(ErrorMessage = "Sản phẩm cha là bắt buộc")]
+        public int? ParentProductId { get; set; }
+
+        public Product? ParentProduct { get; set; }
         public ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
         public ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
     }

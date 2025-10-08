@@ -1,0 +1,63 @@
+@model IEnumerable<ShopThoiTrangNam.Models.Product>
+@{
+    ViewData["Title"] = "Sản phẩm";
+    var categories = ViewBag.Categories as List<ShopThoiTrangNam.Models.Category>;
+    int? selectedCategory = ViewBag.SelectedCategory;
+}
+
+<div class="container-fluid px-3">
+    <div class="row mb-4">
+        <!-- Sidebar danh mục -->
+        <div class="col-12 col-md-3 mb-3 mb-md-0">
+            <h5 class="fw-bold">Danh mục sản phẩm</h5>
+            <ul class="list-group">
+                <li class="list-group-item @(selectedCategory == null ? "active" : "")">
+                    <a class="d-block text-decoration-none @(selectedCategory == null ? "text-white" : "text-dark")"
+                       asp-controller="Store" asp-action="Index">Tất cả sản phẩm</a>
+                </li>
+                @foreach (var cat in categories)
+                {
+                    <li class="list-group-item @(selectedCategory == cat.CategoryId ? "active" : "")">
+                        <a class="d-block text-decoration-none @(selectedCategory == cat.CategoryId ? "text-white" : "text-dark")"
+                           asp-controller="Store" asp-action="Index" asp-route-categoryId="@cat.CategoryId">
+                            @cat.CategoryName
+                        </a>
+                    </li>
+                }
+            </ul>
+        </div>
+
+        <!-- Danh sách sản phẩm -->
+        <div class="col-12 col-md-9">
+            @if (!Model.Any())
+            {
+                <p class="text-center mt-4">Không có sản phẩm nào trong danh mục này.</p>
+            }
+            else
+            {
+                <div class="row g-3">
+                    @foreach (var item in Model)
+                    {
+                        <div class="col-6 col-sm-6 col-md-4 col-lg-3">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <img src="@item.ImageUrl"
+                                     alt="@item.ProductName"
+                                     class="card-img-top img-fluid"
+                                     style="height: 250px; object-fit: cover;" />
+
+                                <div class="card-body text-center p-2">
+                                    <h6 class="card-title text-truncate fw-bold" title="@item.ProductName">
+                                        @item.ProductName
+                                    </h6>
+                                    <p class="card-text text-danger fw-semibold mb-2">@item.Price.ToString("N0") ₫</p>
+                                    <a asp-controller="Store" asp-action="Details" asp-route-id="@item.ProductId"
+                                       class="btn btn-outline-primary btn-sm w-100">Xem chi tiết</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>

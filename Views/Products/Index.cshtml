@@ -1,19 +1,28 @@
 @model IEnumerable<ShopThoiTrangNam.Models.Product>
-
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Quản lý sản phẩm";
 }
 
-<h1>Quản lý sản phẩm</h1>
+<!-- Thông báo -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
 
-<!-- Dropdown lọc danh mục -->
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+<h1>@ViewData["Title"]</h1>
+
 <form asp-action="Index" method="get" class="mb-3">
     @{
-        var selectedCategoryId = Context.Request.Query["categoryId"].ToString();
-        var categories = (ViewBag.Categories as List<ShopThoiTrangNam.Models.Category>) ?? new List<ShopThoiTrangNam.Models.Category>();
+        var selectedCategoryId = ViewData["SelectedCategoryId"]?.ToString();
+        var categories = ViewBag.Categories as List<ShopThoiTrangNam.Models.Category> ?? new List<ShopThoiTrangNam.Models.Category>();
     }
-    <div class="input-group" style="max-width: 300px;">
-        <select class="form-select" name="categoryId" style="border: 2px solid #000;" onchange="this.form.submit()">
+    <div class="input-group" style="max-width:300px;">
+        <select name="categoryId" class="form-select" onchange="this.form.submit()">
             <option value="">-- Tất cả danh mục --</option>
             @foreach (var category in categories)
             {
@@ -31,41 +40,43 @@
 </form>
 
 <p>
-    <a class="btn btn-outline-success mt-auto" asp-action="Create">Thêm sản phẩm mới</a>
+    <a asp-action="Create" class="btn btn-outline-success mt-auto">Thêm sản phẩm mới</a>
 </p>
 
-<table class="table">
+<table class="table table-bordered">
     <thead>
         <tr>
-            <th>@Html.DisplayNameFor(model => model.ProductName)</th>
-            <th>@Html.DisplayNameFor(model => model.Price)</th>
-            <th>@Html.DisplayNameFor(model => model.Description)</th>
-            <th>@Html.DisplayNameFor(model => model.StockQuantity)</th>
-            <th>@Html.DisplayNameFor(model => model.ImageUrl)</th>
-            <th>@Html.DisplayNameFor(model => model.CreatedAt)</th>
-            <th>@Html.DisplayNameFor(model => model.Category)</th>
-            <th>@Html.DisplayNameFor(model => model.Size)</th>
-            <th>@Html.DisplayNameFor(model => model.Color)</th>
+            <th>Tên</th>
+            <th>Giá</th>
+            <th>Mô tả</th>
+            <th>Tồn kho</th>
+            <th>Ảnh</th>
+            <th>Ngày tạo</th>
+            <th>Danh mục</th>
+            <th>Kích thước</th>
+            <th>Màu sắc</th>
+            <th>Sản phẩm cha</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model)
+        @foreach(var item in Model)
         {
             <tr>
                 <td>@item.ProductName</td>
                 <td>@item.Price</td>
                 <td>@item.Description</td>
                 <td>@item.StockQuantity</td>
-                <td>@item.ImageUrl</td>
+                <td><img src="@item.ImageUrl" alt="@item.ProductName" style="height:50px;" /></td>
                 <td>@item.CreatedAt.ToString("dd/MM/yyyy")</td>
                 <td>@item.Category?.CategoryName</td>
                 <td>@item.Size</td>
                 <td>@item.Color</td>
+                <td>@item.ParentProduct?.ProductName "Không có"</td>
                 <td>
-                    <a class="btn btn-dark btn-sm my-1" asp-action="Details" asp-route-id="@item.ProductId">Chi tiết</a>
-                    <a class="btn btn-warning btn-sm my-1" asp-action="Edit" asp-route-id="@item.ProductId">Sửa</a>
-                    <a class="btn btn-danger btn-sm my-1" asp-action="Delete" asp-route-id="@item.ProductId">Xóa</a>
+                    <a asp-action="Details" asp-route-id="@item.ProductId" class="btn btn-dark btn-sm my-1">Chi tiết</a>
+                    <a asp-action="Edit" asp-route-id="@item.ProductId" class="btn btn-warning btn-sm my-1">Sửa</a>
+                    <a asp-action="Delete" asp-route-id="@item.ProductId" class="btn btn-danger btn-sm my-1">Xóa</a>
                 </td>
             </tr>
         }

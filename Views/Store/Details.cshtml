@@ -1,0 +1,147 @@
+@model ShopThoiTrangNam.Models.Product
+
+@{
+    ViewData["Title"] = Model.ProductName;
+    var related = ViewBag.RelatedProducts as List<ShopThoiTrangNam.Models.Product>;
+    var variants = ViewBag.Variants as List<ShopThoiTrangNam.Models.Product>;
+}
+
+<div class="container my-5">
+    <div class="row g-4">
+        <!-- Ảnh sản phẩm -->
+        <div class="col-md-6">
+            <img id="productImage" src="@Model.ImageUrl" class="img-fluid rounded shadow-sm" alt="@Model.ProductName" />
+        </div>
+
+        <!-- Thông tin sản phẩm -->
+        <div class="col-md-6">
+            <h3 class="fw-bold">@Model.ProductName</h3>
+            <p id="productPrice" class="text-danger h5 fw-semibold">@Model.Price.ToString("N0") ₫</p>
+            <p><strong>Tồn kho:</strong> <span id="productStock">@Model.StockQuantity</span></p>
+
+            <div class="mb-3">
+                <label class="form-label"><strong>Màu sắc:</strong></label>
+                <select id="colorSelect" class="form-select">
+                    @foreach (var c in variants.Select(v => v.Color).Distinct())
+                    {
+                        if (c == Model.Color)
+                        {
+                            <option value="@c" selected>@c</option>
+                        }
+                        else
+                        {
+                            <option value="@c">@c</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label"><strong>Kích cỡ:</strong></label>
+                <select id="sizeSelect" class="form-select">
+                    @foreach (var s in variants.Select(v => v.Size).Distinct())
+                    {
+                        if (s == Model.Size)
+                        {
+                            <option value="@s" selected>@s</option>
+                        }
+                        else
+                        {
+                            <option value="@s">@s</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="mt-4">
+                <button id="addToCartBtn" class="btn btn-primary px-4 me-2">
+                    Thêm vào giỏ
+                </button>
+                <a href="#" class="btn btn-outline-danger px-4">Mua ngay</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sản phẩm liên quan -->
+    @if (related != null && related.Any())
+    {
+        <div class="mt-5">
+            <h5 class="fw-bold mb-3">Sản phẩm liên quan</h5>
+            <div class="row row-cols-2 row-cols-md-4 g-3">
+                @foreach (var item in related)
+                {
+                    <div class="col">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <img src="@item.ImageUrl" class="card-img-top" alt="@item.ProductName" style="height: 200px; object-fit: cover;" />
+                            <div class="card-body text-center p-2">
+                                <h6 class="fw-bold text-truncate">@item.ProductName</h6>
+                                <p class="text-danger fw-semibold mb-1">@item.Price.ToString("N0") ₫</p>
+                                <a asp-controller="Store" asp-action="Details" asp-route-id="@item.ProductId"
+                                   class="btn btn-outline-primary btn-sm w-100">Xem</a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts{
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    function updateVariant() {
+        var selectedColor = $("#colorSelect").val();
+        var selectedSize = $("#sizeSelect").val();
+
+        $.ajax({
+            url: '@Url.Action("GetVariant","Store")',
+            type: 'GET',
+            data: { productName: '@Model.ProductName', color: selectedColor, size: selectedSize },
+            success: function(data) {
+                if (data) {
+                    $("#productImage").attr("src", data.imageUrl);
+                    $("#productPrice").text(data.price.toLocaleString() + " ₫");
+                    $("#productStock").text(data.stockQuantity);
+                    $("#addToCartBtn").data("product-id", data.productId);
+                } else {
+                    alert("Sản phẩm này hiện không có sẵn!");
+                }
+            }
+        });
+    }
+
+    // Khi chọn màu hoặc size
+    $("#colorSelect, #sizeSelect").change(updateVariant);
+
+    // Thêm vào giỏ hàng
+    $("#addToCartBtn").click(function() {
+        var productId = $(this).data("product-id");
+        var color = $("#colorSelect").val();
+        var size = $("#sizeSelect").val();
+        var quantity = 1;
+
+        $.ajax({
+            url: '@Url.Action("AddToCart", "ShoppingCart")',
+            type: 'POST',
+            data: { productId: productId, color: color, size: size, quantity: quantity },
+            success: function(response) {
+                if(response.success) {
+                    $(".btn-outline-warning .badge").text(response.cartCount);
+                    alert("Đã thêm vào giỏ hàng!");
+                } else {
+                    alert("Có lỗi xảy ra!");
+                }
+            },
+            error: function() {
+                alert("Lỗi server, vui lòng thử lại.");
+            }
+        });
+    });
+
+    // Khởi tạo khi load trang
+    updateVariant();
+});
+</script>
+}

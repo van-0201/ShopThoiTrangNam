@@ -57,7 +57,7 @@
                             else
                             {
                                 <li class="nav-item">
-                                    <a class="nav-link" href="">Sản phẩm</a>
+                                    <a class="nav-link" asp-controller="Store" asp-action="Index">Sản phẩm</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" href="">Giới thiệu</a>
@@ -113,7 +113,7 @@
                             <!-- Giỏ hàng -->
                             @if (User?.IsInRole("Customer") == true)
                             {
-                                <a class="btn btn-outline-warning position-relative" asp-controller="Cart" asp-action="Index">
+                                <a class="btn btn-outline-warning position-relative" asp-controller="ShoppingCart" asp-action="Index">
                                     <img src="~/Icons/IconGioHang.png" alt="Cart" style="width:20px; height:20px;" />
                                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                                         @ViewBag.CartCount 0

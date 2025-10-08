@@ -1,48 +1,30 @@
-@model ShopThoiTrangNam.Models.Product
-
-@{
-    ViewData["Title"] = "Details";
-}
-
-<h1>Chi tiết sản phẩm</h1>
-
-<div class="row mb-4">
+<div class="row">
     <div class="col-md-4">
-        <img src="@Model.ImageUrl" alt="@Model.ProductName" class="img-fluid rounded" style="height: 330px; object-fit: cover;"/>
+        <img src="@Model.ImageUrl" class="product-image" alt="@Model.ProductName"/>
     </div>
     <div class="col-md-8">
-        <h4>Product</h4>
-        <hr />
         <dl class="row">
-            <dt class="col-sm-4">@Html.DisplayNameFor(model => model.ProductName)</dt>
-            <dd class="col-sm-8">@Html.DisplayFor(model => model.ProductName)</dd>
-
-            <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Price)</dt>
-            <dd class="col-sm-8">@Html.DisplayFor(model => model.Price)</dd>
-
-            <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Description)</dt>
-            <dd class="col-sm-8">@Html.DisplayFor(model => model.Description)</dd>
-
-            <dt class="col-sm-4">@Html.DisplayNameFor(model => model.StockQuantity)</dt>
-            <dd class="col-sm-8">@Html.DisplayFor(model => model.StockQuantity)</dd>
-
-            <dt class="col-sm-4">@Html.DisplayNameFor(model => model.CreatedAt)</dt>
-            <dd class="col-sm-8">@Html.DisplayFor(model => model.CreatedAt)</dd>
-
-            <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Category)</dt>
-            <dd class="col-sm-8">@Html.DisplayFor(model => model.Category.CategoryName)</dd>
-
-            <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Size)</dt>
-            <dd class="col-sm-8">@Html.DisplayFor(model => model.Size)</dd>
-
-            <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Color)</dt>
-            <dd class="col-sm-8">@Html.DisplayFor(model => model.Color)</dd>
+            <dt class="col-sm-3">Tên</dt><dd class="col-sm-9">@Model.ProductName</dd>
+            <dt class="col-sm-3">Giá</dt><dd class="col-sm-9">@Model.Price</dd>
+            <dt class="col-sm-3">Mô tả</dt><dd class="col-sm-9">@Model.Description</dd>
+            <dt class="col-sm-3">Tồn kho</dt><dd class="col-sm-9">@Model.StockQuantity</dd>
+            <dt class="col-sm-3">Danh mục</dt><dd class="col-sm-9">@Model.Category?.CategoryName</dd>
+            <dt class="col-sm-3">Kích thước</dt><dd class="col-sm-9">@Model.Size</dd>
+            <dt class="col-sm-3">Màu sắc</dt><dd class="col-sm-9">@Model.Color</dd>
+            <dt class="col-sm-3">Sản phẩm cha</dt><dd class="col-sm-9">@Model.ParentProduct?.ProductName ?? "Không có"</dd>
+            <dt class="col-sm-3">Ngày tạo</dt><dd class="col-sm-9">@Model.CreatedAt.ToString("dd/MM/yyyy")</dd>
         </dl>
+        <a asp-action="Edit" asp-route-id="@Model.ProductId" class="btn btn-warning">Sửa</a>
+        <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
     </div>
 </div>
 
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.ProductId" class="btn btn-warning my-1">Sửa</a>
-    <a asp-action="Index" class="btn btn-secondary">Quay về danh sách</a>
-</div>
-
+<style>
+.product-image {
+    height: 330px;      
+    width: auto;        
+    display: block;
+    margin: 0 auto;
+    object-fit: contain; 
+}
+</style>

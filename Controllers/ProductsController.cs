@@ -1,109 +1,103 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ShopThoiTrangNam.Models;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ShopThoiTrangNam.Controllers
 {
     public class ProductsController : Controller
     {
         private readonly ApplicationDbContext _context;
-
-        public ProductsController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        public ProductsController(ApplicationDbContext context) => _context = context;
 
         // GET: Products
         public async Task<IActionResult> Index(int? categoryId)
         {
-            ViewBag.Categories = await _context.Categories.ToListAsync();
+            // Lấy toàn bộ danh mục để hiển thị dropdown
+            var categories = await _context.Categories.ToListAsync();
+            ViewBag.Categories = categories;
 
-            var products = _context.Products.Include(p => p.Category).AsQueryable();
-
-            if (categoryId.HasValue)
-            {
-                products = products.Where(p => p.CategoryId == categoryId);
-            }
-
-            return View(await products.ToListAsync());
-        }
-
-        // GET: Products/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var product = await _context.Products
+            // Lấy tất cả sản phẩm
+            var products = _context.Products
                 .Include(p => p.Category)
-                .FirstOrDefaultAsync(m => m.ProductId == id);
-            if (product == null)
-            {
-                return NotFound();
-            }
+                .Include(p => p.ParentProduct)
+                .AsQueryable();
 
-            return View(product);
+            // Chỉ lọc nếu categoryId có giá trị
+            if (categoryId.HasValue && categoryId.Value != 0)
+                products = products.Where(p => p.CategoryId == categoryId.Value);
+
+            // Truyền category đã chọn để dropdown giữ trạng thái
+            ViewData["SelectedCategoryId"] = categoryId;
+
+            // Materialize kết quả để debug
+            var list = await products.ToListAsync();
+            ViewBag.DebugCount = list.Count; // số sản phẩm được trả về
+            ViewBag.DebugIds = list.Select(p => p.ProductId).ToList(); // danh sách id
+
+            return View(list);
         }
 
         // GET: Products/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "CategoryId", "CategoryName");
+            ViewData["CategoryId"] = new SelectList(await _context.Categories.ToListAsync(), "CategoryId", "CategoryName");
+            ViewData["ParentProductId"] = new SelectList(await _context.Products.ToListAsync(), "ProductId", "ProductName");
             return View();
         }
 
         // POST: Products/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ProductId,ProductName,CategoryId,Price,Description,StockQuantity,ImageUrl,CreatedAt,Size,Color")] Product product)
+        public async Task<IActionResult> Create([Bind("ProductId,ProductName,CategoryId,Price,Description,StockQuantity,ImageUrl,Size,Color,ParentProductId")] Product product)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(product);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    _context.Add(product);
+                    await _context.SaveChangesAsync();
+
+                    // Thông báo thành công
+                    TempData["SuccessMessage"] = "Đã thêm sản phẩm mới thành công!";
+
+                    // Redirect về Index để hiển thị sản phẩm mới
+                    return RedirectToAction(nameof(Index));
+                }
+                catch
+                {
+                    // Nếu có lỗi, thông báo
+                    TempData["ErrorMessage"] = "Có lỗi xảy ra khi thêm sản phẩm.";
+                }
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "CategoryId", "CategoryName", product.CategoryId);
+
+            // Nếu ModelState không hợp lệ hoặc catch lỗi, trả về view với dropdown
+            ViewData["CategoryId"] = new SelectList(await _context.Categories.ToListAsync(), "CategoryId", "CategoryName", product.CategoryId);
             return View(product);
         }
+
 
         // GET: Products/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var product = await _context.Products.FindAsync(id);
-            if (product == null)
-            {
-                return NotFound();
-            }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "CategoryId", "CategoryName", product.CategoryId);
+            if (product == null) return NotFound();
+
+            ViewData["CategoryId"] = new SelectList(await _context.Categories.ToListAsync(), "CategoryId", "CategoryName", product.CategoryId);
+            ViewData["ParentProductId"] = new SelectList(await _context.Products.Where(p => p.ProductId != id).ToListAsync(), "ProductId", "ProductName", product.ParentProductId);
             return View(product);
         }
 
         // POST: Products/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ProductId,ProductName,CategoryId,Price,Description,StockQuantity,ImageUrl,CreatedAt,Size,Color")] Product product)
+        public async Task<IActionResult> Edit(int id, [Bind("ProductId,ProductName,CategoryId,Price,Description,StockQuantity,ImageUrl,Size,Color,ParentProductId")] Product product)
         {
-            if (id != product.ProductId)
-            {
-                return NotFound();
-            }
+            if (id != product.ProductId) return NotFound();
 
             if (ModelState.IsValid)
             {
@@ -114,36 +108,28 @@ namespace ShopThoiTrangNam.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ProductExists(product.ProductId))
-                    {
+                    if (!_context.Products.Any(e => e.ProductId == product.ProductId))
                         return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    else throw;
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "CategoryId", "CategoryName", product.CategoryId);
+            ViewData["CategoryId"] = new SelectList(await _context.Categories.ToListAsync(), "CategoryId", "CategoryName", product.CategoryId);
+            ViewData["ParentProductId"] = new SelectList(await _context.Products.Where(p => p.ProductId != id).ToListAsync(), "ProductId", "ProductName", product.ParentProductId);
             return View(product);
         }
 
         // GET: Products/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var product = await _context.Products
                 .Include(p => p.Category)
-                .FirstOrDefaultAsync(m => m.ProductId == id);
-            if (product == null)
-            {
-                return NotFound();
-            }
+                .Include(p => p.ParentProduct)
+                .FirstOrDefaultAsync(p => p.ProductId == id);
+
+            if (product == null) return NotFound();
 
             return View(product);
         }
@@ -155,17 +141,25 @@ namespace ShopThoiTrangNam.Controllers
         {
             var product = await _context.Products.FindAsync(id);
             if (product != null)
-            {
                 _context.Products.Remove(product);
-            }
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
-
-        private bool ProductExists(int id)
+        
+        // GET: Products/Details/5
+        public async Task<IActionResult> Details(int? id)
         {
-            return _context.Products.Any(e => e.ProductId == id);
+            if (id == null) return NotFound();
+
+            var product = await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.ParentProduct)
+                .FirstOrDefaultAsync(p => p.ProductId == id);
+
+            if (product == null) return NotFound();
+
+            return View(product); // View này là Views/Products/Details.cshtml
         }
     }
 }

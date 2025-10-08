@@ -1,82 +1,79 @@
 @model ShopThoiTrangNam.Models.Product
-
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Chỉnh sửa sản phẩm";
 }
 
-<h1>Chỉnh sửa thông tin sản phẩm</h1>
-
-<h4>Product</h4>
+<h1>@ViewData["Title"]</h1>
 <hr />
+
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
+    <div class="col-md-6">
+        <form asp-action="Edit" method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="ProductId" />
 
             <div class="form-group">
-                <label asp-for="ProductName" class="control-label"></label>
+                <label asp-for="ProductName"></label>
                 <input asp-for="ProductName" class="form-control" />
                 <span asp-validation-for="ProductName" class="text-danger"></span>
             </div>
 
             <div class="form-group">
-                <label asp-for="CategoryId" class="control-label"></label>
-                <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.CategoryId"></select>
+                <label asp-for="CategoryId"></label>
+                <select asp-for="CategoryId" class="form-control" asp-items="@(ViewData["CategoryId"] as SelectList)">
+                    <option value="">-- Chọn danh mục (nếu có) --</option>
+                </select>
                 <span asp-validation-for="CategoryId" class="text-danger"></span>
             </div>
 
             <div class="form-group">
-                <label asp-for="Price" class="control-label"></label>
+                <label asp-for="ParentProductId"></label>
+                <input asp-for="ParentProductId" class="form-control" placeholder="Nhập ID sản phẩm cha nếu có" />
+                <span asp-validation-for="ParentProductId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Price"></label>
                 <input asp-for="Price" class="form-control" />
                 <span asp-validation-for="Price" class="text-danger"></span>
             </div>
 
             <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
+                <label asp-for="Description"></label>
                 <textarea asp-for="Description" class="form-control"></textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
 
             <div class="form-group">
-                <label asp-for="StockQuantity" class="control-label"></label>
+                <label asp-for="StockQuantity"></label>
                 <input asp-for="StockQuantity" class="form-control" />
                 <span asp-validation-for="StockQuantity" class="text-danger"></span>
             </div>
 
             <div class="form-group">
-                <label asp-for="ImageUrl" class="control-label"></label>
+                <label asp-for="ImageUrl"></label>
                 <input asp-for="ImageUrl" class="form-control" />
                 <span asp-validation-for="ImageUrl" class="text-danger"></span>
             </div>
 
-            @* Chỉ hiển thị ngày tạo, không cho sửa *@
             <div class="form-group">
-                <label asp-for="CreatedAt" class="control-label"></label>
-                <input asp-for="CreatedAt" class="form-control" readonly />
-            </div>
-
-            <div class="form-group">
-                <label asp-for="Size" class="control-label"></label>
+                <label asp-for="Size"></label>
                 <input asp-for="Size" class="form-control" />
                 <span asp-validation-for="Size" class="text-danger"></span>
             </div>
 
             <div class="form-group">
-                <label asp-for="Color" class="control-label"></label>
+                <label asp-for="Color"></label>
                 <input asp-for="Color" class="form-control" />
                 <span asp-validation-for="Color" class="text-danger"></span>
             </div>
 
-            <div class="form-group">
-                <input type="submit" value="Lưu" class="btn btn-primary my-1" />
+            <div class="form-group mt-2">
+                <input type="submit" value="Lưu" class="btn btn-primary mb-1" />
+                <a asp-action="Index" class="btn btn-secondary mb-1">Quay về danh sách</a>
             </div>
         </form>
     </div>
-</div>
-
-<div>
-    <a asp-action="Index" class="btn btn-secondary mb-1">Quay về danh sách</a>
 </div>
 
 @section Scripts {
