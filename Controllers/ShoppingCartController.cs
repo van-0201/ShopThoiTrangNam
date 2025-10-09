@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using ShopThoiTrangNam.Models;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace ShopThoiTrangNam.Controllers
 {
@@ -28,6 +29,7 @@ namespace ShopThoiTrangNam.Controllers
 
             var cartItems = await _context.ShoppingCarts
                 .Include(c => c.Product)
+                    .ThenInclude(p => p.Category)
                 .Where(c => c.UserId == user.Id)
                 .ToListAsync();
 
@@ -37,20 +39,19 @@ namespace ShopThoiTrangNam.Controllers
 
         // ✅ Thêm vào giỏ hàng (AJAX)
         [HttpPost]
-        public async Task<IActionResult> AddToCart(int productId, string color, string size, int quantity = 1)
+        public async Task<IActionResult> AddToCart(int productId, int quantity = 1)
         {
             var user = await _userManager.GetUserAsync(User);
-            if (user == null) return Unauthorized();
+            if (user == null) return Json(new { success = false, message = "Vui lòng đăng nhập để thêm vào giỏ." });
 
-            // Lấy đúng variant theo size/color, hoặc chính bản gốc
-            var selectedVariant = await _context.Products
-                .FirstOrDefaultAsync(p => (p.ProductId == productId || p.ParentProductId == productId)
-                                          && p.Size == size
-                                          && p.Color == color);
+            var selectedVariant = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == productId);
 
-            if (selectedVariant == null) return NotFound("Sản phẩm không tồn tại hoặc không còn trong kho.");
-
-            // Kiểm tra trong giỏ hàng xem đã có chưa
+            if (selectedVariant == null || selectedVariant.StockQuantity < quantity || quantity <= 0)
+            {
+                string message = selectedVariant == null ? "Sản phẩm không tồn tại." : (selectedVariant.StockQuantity < quantity ? $"Chỉ còn {selectedVariant.StockQuantity} sản phẩm trong kho." : "Số lượng không hợp lệ.");
+                return Json(new { success = false, message = message });
+            }
+            
             var existing = await _context.ShoppingCarts.FirstOrDefaultAsync(c =>
                 c.UserId == user.Id &&
                 c.ProductId == selectedVariant.ProductId
@@ -67,22 +68,20 @@ namespace ShopThoiTrangNam.Controllers
                     UserId = user.Id,
                     ProductId = selectedVariant.ProductId,
                     Quantity = quantity,
-                    Size = selectedVariant.Size,
+                    Size = selectedVariant.Size, 
                     Color = selectedVariant.Color,
-                    Price = selectedVariant.Price
+                    Price = selectedVariant.Price 
                 };
                 _context.ShoppingCarts.Add(item);
             }
 
             await _context.SaveChangesAsync();
 
-            // Đếm số lượng sản phẩm trong giỏ
             var cartCount = await _context.ShoppingCarts.CountAsync(c => c.UserId == user.Id);
 
-            // Trả về JSON cho AJAX
-            return Json(new { success = true, cartCount });
+            return Json(new { success = true, cartCount, message = "Đã thêm vào giỏ hàng thành công!" });
         }
-
+        
         // ✅ Xóa sản phẩm trong giỏ
         [HttpPost]
         public async Task<IActionResult> Remove(int id)
@@ -99,21 +98,29 @@ namespace ShopThoiTrangNam.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // ✅ Cập nhật số lượng
+        // ✅ Cập nhật số lượng - TRẢ VỀ JSON CHO AJAX
         [HttpPost]
         public async Task<IActionResult> UpdateQuantity(int id, int quantity)
         {
             var user = await _userManager.GetUserAsync(User);
-            if (user == null) return Unauthorized();
+            if (user == null) return Json(new { success = false, message = "Vui lòng đăng nhập." });
 
-            var item = await _context.ShoppingCarts.FirstOrDefaultAsync(c => c.CartId == id && c.UserId == user.Id);
-            if (item == null) return NotFound();
-            if (quantity <= 0) return BadRequest();
+            var item = await _context.ShoppingCarts
+                .Include(c => c.Product)
+                .FirstOrDefaultAsync(c => c.CartId == id && c.UserId == user.Id);
+            
+            if (item == null) return Json(new { success = false, message = "Sản phẩm không tồn tại trong giỏ hàng." });
+            if (quantity <= 0) return Json(new { success = false, message = "Số lượng phải lớn hơn 0." });
+            
+            if (item.Product != null && quantity > item.Product.StockQuantity)
+            {
+                return Json(new { success = false, message = $"Số lượng tối đa có thể đặt là {item.Product.StockQuantity}." });
+            }
 
             item.Quantity = quantity;
             await _context.SaveChangesAsync();
 
-            return RedirectToAction(nameof(Index));
+            return Json(new { success = true, message = "Đã cập nhật số lượng." });
         }
     }
 }

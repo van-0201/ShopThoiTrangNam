@@ -2,7 +2,7 @@
 
 @{
     ViewData["Title"] = "Giỏ hàng của bạn";
-    decimal totalAmount = ViewBag.TotalAmount ?? 0;
+    decimal totalAmount = Model.Sum(i => i.Price * i.Quantity); 
 }
 
 <div class="container my-5">
@@ -17,7 +17,7 @@
     }
     else
     {
-        <table class="table table-bordered align-middle shadow-sm">
+        <table id="cart-table" class="table table-bordered align-middle shadow-sm">
             <thead class="table-dark text-center">
                 <tr>
                     <th>Ảnh</th>
@@ -34,7 +34,8 @@
                 @foreach (var item in Model)
                 {
                     var product = item.Product;
-                    <tr>
+                    // Lấy giá dưới dạng số cho JS tính toán
+                    <tr class="cart-row" data-cart-id="@item.CartId" data-price="@item.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)">
                         <td style="width:120px; text-align:center;">
                             <img src="@product?.ImageUrl" alt="@product?.ProductName" class="img-thumbnail" style="width:100px; height:100px; object-fit:cover;" />
                         </td>
@@ -44,16 +45,20 @@
                         </td>
                         <td class="text-center">@item.Color</td>
                         <td class="text-center">@item.Size</td>
-                        <td class="text-end text-danger">@item.Price.ToString("N0") ₫</td>
+                        <td class="text-end text-danger item-price">@item.Price.ToString("N0") ₫</td>
                         <td class="text-center" style="width:140px;">
-                            <form asp-action="UpdateQuantity" method="post" class="d-flex justify-content-center">
-                                <input type="hidden" name="id" value="@item.CartId" />
-                                <input type="number" name="quantity" value="@item.Quantity" min="1" class="form-control text-center" style="width:70px;" />
-                                <button type="submit" class="btn btn-outline-secondary ms-2 btn-sm">Cập nhật</button>
-                            </form>
+                            @* XÓA NÚT CẬP NHẬT - TỰ ĐỘNG CẬP NHẬT BẰNG JS/AJAX *@
+                            <input type="number" 
+                                   name="quantity" 
+                                   value="@item.Quantity" 
+                                   min="1" 
+                                   class="form-control text-center quantity-input" 
+                                   data-cart-id="@item.CartId"
+                                   style="width:80px; display:inline-block;" />
                         </td>
-                        <td class="text-end fw-bold text-primary">@((item.Price * item.Quantity).ToString("N0")) ₫</td>
+                        <td class="text-end fw-bold text-primary item-total">@((item.Price * item.Quantity).ToString("N0")) ₫</td>
                         <td class="text-center">
+                            @* Giữ form xóa *@
                             <form asp-action="Remove" method="post" onsubmit="return confirm('Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?');">
                                 <input type="hidden" name="id" value="@item.CartId" />
                                 <button type="submit" class="btn btn-outline-danger btn-sm">Xóa</button>
@@ -68,11 +73,103 @@
             <a asp-controller="Store" asp-action="Index" class="btn btn-outline-secondary">← Tiếp tục mua sắm</a>
 
             <div class="text-end">
-                <h5 class="fw-bold">Tổng cộng: 
-                    <span class="text-danger">@totalAmount.ToString("N0") ₫</span>
+                <h5 class="fw-bold">
+                    Tổng cộng: 
+                    <span class="text-danger" id="grand-total">@totalAmount.ToString("N0") ₫</span>
                 </h5>
                 <a href="#" class="btn btn-success px-4 mt-2">Thanh toán</a>
             </div>
         </div>
     }
 </div>
+
+@section Scripts {
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function () {
+    // Hàm định dạng số tiền (Đảm bảo định dạng tiền tệ Việt Nam)
+    function formatCurrency(number) {
+        // Sử dụng 'vi-VN' để định dạng chuẩn (ví dụ: 1.000.000)
+        return number.toLocaleString('vi-VN');
+    }
+
+    // Hàm cập nhật tổng tiền cho một hàng và Tổng cộng chung
+    function updateTotals(cartId, newQuantity) {
+        const row = $(`.cart-row[data-cart-id="${cartId}"]`);
+        // Phải đảm bảo giá trị data-price là một số hợp lệ
+        // Thay thế dấu phân cách hàng nghìn (nếu có) bằng dấu chấm để parse đúng
+        const price = parseFloat(row.data('price').replace(/,/g, '.')); 
+        
+        if (isNaN(price)) return;
+
+        const itemTotal = price * newQuantity;
+
+        // 1. Cập nhật Tổng tiền của hàng
+        row.find('.item-total').text(formatCurrency(itemTotal) + ' ₫');
+
+        // 2. Cập nhật Tổng cộng chung
+        let grandTotal = 0;
+        $('.cart-row').each(function() {
+            const rowPrice = parseFloat($(this).data('price').replace(/,/g, '.'));
+            const rowQuantity = parseInt($(this).find('.quantity-input').val());
+            if (!isNaN(rowPrice) && !isNaN(rowQuantity)) {
+                grandTotal += rowPrice * rowQuantity;
+            }
+        });
+
+        $('#grand-total').text(formatCurrency(grandTotal) + ' ₫');
+    }
+
+    // ----------------------------------------------------
+    // Xử lý sự kiện khi số lượng thay đổi (AJAX)
+    // ----------------------------------------------------
+    let timeout = null;
+    
+    $(document).on('input', '.quantity-input', function () {
+        const inputElement = $(this);
+        const cartId = inputElement.data('cart-id');
+        let newQuantity = parseInt(inputElement.val());
+
+        if (newQuantity < 1 || isNaN(newQuantity)) {
+            newQuantity = 1;
+            inputElement.val(1);
+        }
+
+        // Cập nhật tổng tiền tức thì trên giao diện
+        updateTotals(cartId, newQuantity);
+
+        // Xóa timeout cũ nếu có (debounce)
+        if (timeout) {
+            clearTimeout(timeout);
+        }
+
+        // Đặt timeout mới để gọi AJAX sau 500ms
+        timeout = setTimeout(function () {
+            // Gọi AJAX để cập nhật số lượng trong DB
+            $.ajax({
+                url: '@Url.Action("UpdateQuantity", "ShoppingCart")',
+                type: 'POST',
+                data: { id: cartId, quantity: newQuantity },
+                success: function (response) {
+                    if (response.success) {
+                        // Cập nhật số lượng trên icon giỏ hàng trên Layout
+                        // Cần phải gọi lại View Component hoặc API khác để lấy số lượng mới nếu cần
+                        // Tuy nhiên, đối với giỏ hàng, số lượng item không đổi khi update quantity, nên không cần cập nhật badge ở đây.
+                        console.log("Cập nhật giỏ hàng thành công!");
+                    } else {
+                        // Xử lý lỗi (ví dụ: số lượng vượt quá tồn kho)
+                        alert(response.message || "Không thể cập nhật giỏ hàng.");
+                        // Tải lại trang để đồng bộ (hoặc đặt lại giá trị input)
+                        location.reload(); 
+                    }
+                },
+                error: function () {
+                    alert("Lỗi server khi cập nhật giỏ hàng.");
+                    location.reload(); 
+                }
+            });
+        }, 500); // Gửi yêu cầu AJAX sau 500ms
+    });
+});
+</script>
+}

@@ -6,9 +6,10 @@ namespace ShopThoiTrangNam.Models
     public class ShoppingCart
     {
         [Key]
+        [Column("ShoppingCartId")] // SỬA LỖI MAPPING DB
         public int CartId { get; set; }
 
-        public string? UserId { get; set; }  // <--- vừa thêm đây
+        public string? UserId { get; set; }  
 
         public int ProductId { get; set; }
 
@@ -18,7 +19,7 @@ namespace ShopThoiTrangNam.Models
 
         public string? Color { get; set; }
 
-        public decimal Price { get; set; }  // giá tại thời điểm thêm
+        public decimal Price { get; set; }
 
         [ForeignKey("UserId")]
         public virtual ApplicationUser? User { get; set; }

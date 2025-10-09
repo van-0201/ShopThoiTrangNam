@@ -4,75 +4,122 @@
     ViewData["Title"] = Model.ProductName;
     var related = ViewBag.RelatedProducts as List<ShopThoiTrangNam.Models.Product>;
     var variants = ViewBag.Variants as List<ShopThoiTrangNam.Models.Product>;
+
+    // Lấy ProductId gốc để truyền vào JS (dùng cho việc tìm biến thể)
+    var rootProductId = Model.ParentProductId ?? Model.ProductId;
 }
+
+<style>
+    /* Ô chọn màu/size */
+    .option-box {
+        display: inline-block;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        padding: 8px 16px;
+        margin: 5px 6px 5px 0;
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.2s ease-in-out;
+        background-color: #fff;
+        font-size: 14px;
+    }
+    .option-box:hover {
+        border-color: #007bff;
+        box-shadow: 0 0 6px rgba(0, 123, 255, 0.3);
+    }
+    .option-box.active {
+        border-color: #007bff;
+        background-color: #007bff;
+        color: #fff;
+        font-weight: 600;
+        transform: scale(1.03);
+    }
+
+    /* Mô tả sản phẩm */
+    .product-description {
+        background-color: #fafafa;
+        border: 1px solid #eee;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 35px;
+        line-height: 1.6;
+        font-size: 15px;
+        color: #444;
+    }
+    .product-description h5 {
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: #222;
+    }
+
+    /* Sản phẩm liên quan */
+    .related-title {
+        font-weight: 600;
+        font-size: 18px;
+        margin-bottom: 12px;
+    }
+</style>
 
 <div class="container my-5">
     <div class="row g-4">
-        <!-- Ảnh sản phẩm -->
-        <div class="col-md-6">
-            <img id="productImage" src="@Model.ImageUrl" class="img-fluid rounded shadow-sm" alt="@Model.ProductName" />
+        <div class="col-md-6 text-center">
+            <img id="productImage" src="@Model.ImageUrl" class="img-fluid rounded shadow-sm" style="max-height: 420px; object-fit: cover;" alt="@Model.ProductName" />
         </div>
 
-        <!-- Thông tin sản phẩm -->
         <div class="col-md-6">
-            <h3 class="fw-bold">@Model.ProductName</h3>
+            <h3 class="fw-bold mb-2">@Model.ProductName</h3>
             <p id="productPrice" class="text-danger h5 fw-semibold">@Model.Price.ToString("N0") ₫</p>
-            <p><strong>Tồn kho:</strong> <span id="productStock">@Model.StockQuantity</span></p>
+            <p class="mb-1"><strong>Tồn kho:</strong> <span id="productStock">@Model.StockQuantity</span></p>
 
             <div class="mb-3">
-                <label class="form-label"><strong>Màu sắc:</strong></label>
-                <select id="colorSelect" class="form-select">
-                    @foreach (var c in variants.Select(v => v.Color).Distinct())
+                <label class="form-label"><strong>Màu sắc:</strong></label><br />
+                <div id="colorOptions" class="d-flex flex-wrap"> 
+                    @foreach (var c in variants.Select(v => v.Color).Where(c => !string.IsNullOrEmpty(c)).Distinct())
                     {
-                        if (c == Model.Color)
-                        {
-                            <option value="@c" selected>@c</option>
-                        }
-                        else
-                        {
-                            <option value="@c">@c</option>
-                        }
+                        var isActive = c == Model.Color ? "active" : "";
+                        <div class="option-box color-option @isActive" data-color="@c" data-option-type="color">@c</div>
                     }
-                </select>
+                </div>
             </div>
 
             <div class="mb-3">
-                <label class="form-label"><strong>Kích cỡ:</strong></label>
-                <select id="sizeSelect" class="form-select">
-                    @foreach (var s in variants.Select(v => v.Size).Distinct())
+                <label class="form-label"><strong>Kích cỡ:</strong></label><br />
+                <div id="sizeOptions" class="d-flex flex-wrap"> 
+                    @foreach (var s in variants.Select(v => v.Size).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s))
                     {
-                        if (s == Model.Size)
-                        {
-                            <option value="@s" selected>@s</option>
-                        }
-                        else
-                        {
-                            <option value="@s">@s</option>
-                        }
+                        var isActive = s == Model.Size ? "active" : "";
+                        <div class="option-box size-option @isActive" data-size="@s" data-option-type="size">@s</div>
                     }
-                </select>
+                </div>
             </div>
 
             <div class="mt-4">
-                <button id="addToCartBtn" class="btn btn-primary px-4 me-2">
-                    Thêm vào giỏ
+                <button id="addToCartBtn" class="btn btn-primary px-4 me-2" data-product-id="@Model.ProductId" @(Model.StockQuantity == 0 ? "disabled" : "")>
+                    <i class="bi bi-cart-plus"></i> Thêm vào giỏ
                 </button>
                 <a href="#" class="btn btn-outline-danger px-4">Mua ngay</a>
             </div>
         </div>
     </div>
 
-    <!-- Sản phẩm liên quan -->
+    @if (!string.IsNullOrEmpty(Model.Description))
+    {
+        <div class="product-description">
+            <h5>Chi tiết sản phẩm</h5>
+            <p>@Html.Raw(Model.Description.Replace("\n", "<br>"))</p>
+        </div>
+    }
+
     @if (related != null && related.Any())
     {
         <div class="mt-5">
-            <h5 class="fw-bold mb-3">Sản phẩm liên quan</h5>
+            <div class="related-title">Sản phẩm liên quan</div>
             <div class="row row-cols-2 row-cols-md-4 g-3">
                 @foreach (var item in related)
                 {
                     <div class="col">
                         <div class="card h-100 border-0 shadow-sm">
-                            <img src="@item.ImageUrl" class="card-img-top" alt="@item.ProductName" style="height: 200px; object-fit: cover;" />
+                            <img src="@item.ImageUrl" class="card-img-top" alt="@item.ProductName" style="height: 320px; object-fit: cover;" />
                             <div class="card-body text-center p-2">
                                 <h6 class="fw-bold text-truncate">@item.ProductName</h6>
                                 <p class="text-danger fw-semibold mb-1">@item.Price.ToString("N0") ₫</p>
@@ -87,61 +134,119 @@
     }
 </div>
 
-@section Scripts{
+@section Scripts {
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-$(document).ready(function() {
+$(document).ready(function () {
+    // ID gốc của nhóm sản phẩm
+    const rootProductId = @rootProductId;
+
+    // Kích hoạt biến thể hiện tại (biến thể đang được tải từ URL)
+    const initialColor = "@Model.Color";
+    const initialSize = "@Model.Size";
+    
+    // Đặt trạng thái active ban đầu
+    if (initialColor) {
+        $(`.color-option[data-color="${initialColor}"]`).addClass('active');
+    }
+    if (initialSize) {
+        $(`.size-option[data-size="${initialSize}"]`).addClass('active');
+    }
+
+    function getSelectedOptions() {
+        const color = $(".color-option.active").data("color");
+        const size = $(".size-option.active").data("size");
+        return { color, size };
+    }
+
     function updateVariant() {
-        var selectedColor = $("#colorSelect").val();
-        var selectedSize = $("#sizeSelect").val();
+        const { color, size } = getSelectedOptions();
+
+        // Chỉ tìm biến thể khi cả màu và size đã được chọn
+        if (!color || !size) {
+            $("#productStock").text("Vui lòng chọn cả màu và kích cỡ");
+            $("#addToCartBtn").prop("disabled", true);
+            $("#addToCartBtn").data("product-id", 0); 
+            return;
+        }
 
         $.ajax({
-            url: '@Url.Action("GetVariant","Store")',
+            url: '@Url.Action("GetVariant", "Store")',
             type: 'GET',
-            data: { productName: '@Model.ProductName', color: selectedColor, size: selectedSize },
-            success: function(data) {
+            data: { parentId: rootProductId, color: color, size: size },
+            success: function (data) {
                 if (data) {
+                    // Cập nhật thông tin sản phẩm
                     $("#productImage").attr("src", data.imageUrl);
-                    $("#productPrice").text(data.price.toLocaleString() + " ₫");
+                    $("#productPrice").text(data.price + " ₫");
                     $("#productStock").text(data.stockQuantity);
+                    
+                    // QUAN TRỌNG: Cập nhật ProductId và trạng thái cho nút "Thêm vào giỏ"
                     $("#addToCartBtn").data("product-id", data.productId);
+                    $("#addToCartBtn").prop("disabled", data.stockQuantity === 0);
+                    
+                    if (data.stockQuantity === 0) {
+                        $("#productStock").text("0 (Hết hàng)");
+                    }
                 } else {
-                    alert("Sản phẩm này hiện không có sẵn!");
+                    // Nếu không tìm thấy biến thể khớp
+                    $("#productStock").text("0 (Không có biến thể này)");
+                    $("#addToCartBtn").prop("disabled", true);
+                    $("#addToCartBtn").data("product-id", 0); 
                 }
+            },
+            error: function () {
+                 $("#productStock").text("Lỗi tải dữ liệu");
+                 $("#addToCartBtn").prop("disabled", true);
             }
         });
     }
 
-    // Khi chọn màu hoặc size
-    $("#colorSelect, #sizeSelect").change(updateVariant);
+    // Xử lý chung cho cả màu và size
+    $(document).on("click", ".option-box", function () {
+        const optionType = $(this).data("option-type"); // Lấy loại: 'color' hoặc 'size'
+        
+        // Bỏ active của tất cả các ô cùng loại
+        $(`.${optionType}-option`).removeClass("active"); 
+        
+        // Thêm active cho ô được click
+        $(this).addClass("active");
+        
+        updateVariant();
+    });
 
-    // Thêm vào giỏ hàng
-    $("#addToCartBtn").click(function() {
-        var productId = $(this).data("product-id");
-        var color = $("#colorSelect").val();
-        var size = $("#sizeSelect").val();
-        var quantity = 1;
+    // Thêm vào giỏ
+    $("#addToCartBtn").click(function () {
+        const productId = $(this).data("product-id");
+        if (productId <= 0) {
+            alert("Vui lòng chọn biến thể sản phẩm hợp lệ.");
+            return;
+        }
 
+        const quantity = 1;
+
+        // AJAX call để thêm vào giỏ hàng
         $.ajax({
             url: '@Url.Action("AddToCart", "ShoppingCart")',
             type: 'POST',
-            data: { productId: productId, color: color, size: size, quantity: quantity },
-            success: function(response) {
-                if(response.success) {
-                    $(".btn-outline-warning .badge").text(response.cartCount);
+            data: { productId: productId, quantity: quantity },
+            success: function (response) {
+                if (response.success) {
+                    // Cập nhật số lượng giỏ hàng trên _Layout (chúng ta đã thêm ID này vào _Layout)
+                    $("#cart-count-badge").text(response.cartCount); 
                     alert("Đã thêm vào giỏ hàng!");
                 } else {
-                    alert("Có lỗi xảy ra!");
+                    alert(response.message || "Có lỗi xảy ra!");
                 }
             },
-            error: function() {
+            error: function () {
                 alert("Lỗi server, vui lòng thử lại.");
             }
         });
     });
 
-    // Khởi tạo khi load trang
-    updateVariant();
+    // Gọi lần đầu để đảm bảo hiển thị đúng trạng thái tồn kho của biến thể hiện tại
+    updateVariant(); 
 });
 </script>
 }

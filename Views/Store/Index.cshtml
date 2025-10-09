@@ -1,34 +1,41 @@
 @model IEnumerable<ShopThoiTrangNam.Models.Product>
 @{
     ViewData["Title"] = "Sản phẩm";
+    // Đảm bảo ViewBags được truy cập đúng cách
     var categories = ViewBag.Categories as List<ShopThoiTrangNam.Models.Category>;
     int? selectedCategory = ViewBag.SelectedCategory;
 }
 
-<div class="container-fluid px-3">
-    <div class="row mb-4">
-        <!-- Sidebar danh mục -->
-        <div class="col-12 col-md-3 mb-3 mb-md-0">
-            <h5 class="fw-bold">Danh mục sản phẩm</h5>
+<div class="container-fluid px-3 my-4"> @* Thêm margin (my-4) để có khoảng trống bên trên *@
+    <div class="row"> @* <-- BẮT ĐẦU HÀNG CHỨA SIDEBAR VÀ DANH SÁCH SẢN PHẨM *@
+        
+        <div class="col-12 col-md-3 mb-4 mb-md-0">
+            <h5 class="fw-bold border-bottom pb-2">Danh mục sản phẩm</h5>
             <ul class="list-group">
+                @* Lựa chọn 'Tất cả sản phẩm' *@
                 <li class="list-group-item @(selectedCategory == null ? "active" : "")">
                     <a class="d-block text-decoration-none @(selectedCategory == null ? "text-white" : "text-dark")"
                        asp-controller="Store" asp-action="Index">Tất cả sản phẩm</a>
                 </li>
-                @foreach (var cat in categories)
+                @* Vòng lặp các danh mục *@
+                @if (categories != null)
                 {
-                    <li class="list-group-item @(selectedCategory == cat.CategoryId ? "active" : "")">
-                        <a class="d-block text-decoration-none @(selectedCategory == cat.CategoryId ? "text-white" : "text-dark")"
-                           asp-controller="Store" asp-action="Index" asp-route-categoryId="@cat.CategoryId">
-                            @cat.CategoryName
-                        </a>
-                    </li>
+                    foreach (var cat in categories)
+                    {
+                        <li class="list-group-item @(selectedCategory == cat.CategoryId ? "active" : "")">
+                            <a class="d-block text-decoration-none @(selectedCategory == cat.CategoryId ? "text-white" : "text-dark")"
+                               asp-controller="Store" asp-action="Index" asp-route-categoryId="@cat.CategoryId">
+                                @cat.CategoryName
+                            </a>
+                        </li>
+                    }
                 }
             </ul>
         </div>
 
-        <!-- Danh sách sản phẩm -->
         <div class="col-12 col-md-9">
+            <h5 class="fw-bold border-bottom pb-2 mb-3">Sản phẩm</h5>
+
             @if (!Model.Any())
             {
                 <p class="text-center mt-4">Không có sản phẩm nào trong danh mục này.</p>
@@ -59,5 +66,5 @@
                 </div>
             }
         </div>
-    </div>
+    </div> @* <-- KẾT THÚC HÀNG *@
 </div>
