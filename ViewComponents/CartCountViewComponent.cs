@@ -22,21 +22,20 @@ namespace ShopThoiTrangNam.ViewComponents
         {
             if (!HttpContext.User.Identity.IsAuthenticated)
             {
-                // Khi không đăng nhập, trả về 0
-                return View(0); // <-- Tự động tìm Views/Shared/Components/CartCount/Default.cshtml
+                return View(0);
             }
 
+            // user có thể là null nếu token hết hạn hoặc lỗi truy vấn
             var user = await _userManager.GetUserAsync(HttpContext.User);
             int count = 0;
 
             if (user != null)
             {
-                // Đếm số lượng item (dòng) khác nhau trong giỏ hàng
+                // Truy cập user.Id chỉ khi user không phải là null
                 count = await _context.ShoppingCarts.CountAsync(c => c.UserId == user.Id);
             }
 
-            // Truyền số lượng (int) làm Model cho View Component
-            return View(count); // <-- Tự động tìm Views/Shared/Components/CartCount/Default.cshtml
+            return View(count);
         }
     }
 }

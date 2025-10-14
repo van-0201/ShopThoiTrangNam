@@ -1,9 +1,10 @@
 @model IEnumerable<ShopThoiTrangNam.Models.Product>
 @{
     ViewData["Title"] = "Quản lý sản phẩm";
+    var selectedCategoryId = ViewData["SelectedCategoryId"]?.ToString();
+    var categories = ViewBag.Categories as List<ShopThoiTrangNam.Models.Category> ?? new List<ShopThoiTrangNam.Models.Category>();
 }
 
-<!-- Thông báo -->
 @if (TempData["SuccessMessage"] != null)
 {
     <div class="alert alert-success">@TempData["SuccessMessage"]</div>
@@ -17,68 +18,139 @@
 <h1>@ViewData["Title"]</h1>
 
 <form asp-action="Index" method="get" class="mb-3">
-    @{
-        var selectedCategoryId = ViewData["SelectedCategoryId"]?.ToString();
-        var categories = ViewBag.Categories as List<ShopThoiTrangNam.Models.Category> ?? new List<ShopThoiTrangNam.Models.Category>();
-    }
     <div class="input-group" style="max-width:300px;">
         <select name="categoryId" class="form-select" onchange="this.form.submit()">
             <option value="">-- Tất cả danh mục --</option>
             @foreach (var category in categories)
             {
-                if (selectedCategoryId == category.CategoryId.ToString())
-                {
-                    <option value="@category.CategoryId" selected>@category.CategoryName</option>
-                }
-                else
-                {
-                    <option value="@category.CategoryId">@category.CategoryName</option>
-                }
+                var isSelected = selectedCategoryId == category.CategoryId.ToString();
+                <option value="@category.CategoryId" selected="@isSelected">@category.CategoryName</option>
             }
         </select>
     </div>
 </form>
 
 <p>
-    <a asp-action="Create" class="btn btn-outline-success mt-auto">Thêm sản phẩm mới</a>
+    <a asp-action="Create" class="btn btn-primary">➕ Thêm sản phẩm mới</a> @* Đã đổi thành btn-primary cho nổi bật *@
 </p>
 
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>Tên</th>
-            <th>Giá</th>
-            <th>Mô tả</th>
-            <th>Tồn kho</th>
-            <th>Ảnh</th>
-            <th>Ngày tạo</th>
-            <th>Danh mục</th>
-            <th>Kích thước</th>
-            <th>Màu sắc</th>
-            <th>Sản phẩm cha</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach(var item in Model)
-        {
+<div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+        <thead>
             <tr>
-                <td>@item.ProductName</td>
-                <td>@item.Price</td>
-                <td>@item.Description</td>
-                <td>@item.StockQuantity</td>
-                <td><img src="@item.ImageUrl" alt="@item.ProductName" style="height:50px;" /></td>
-                <td>@item.CreatedAt.ToString("dd/MM/yyyy")</td>
-                <td>@item.Category?.CategoryName</td>
-                <td>@item.Size</td>
-                <td>@item.Color</td>
-                <td>@item.ParentProduct?.ProductName "Không có"</td>
-                <td>
-                    <a asp-action="Details" asp-route-id="@item.ProductId" class="btn btn-dark btn-sm my-1">Chi tiết</a>
-                    <a asp-action="Edit" asp-route-id="@item.ProductId" class="btn btn-warning btn-sm my-1">Sửa</a>
-                    <a asp-action="Delete" asp-route-id="@item.ProductId" class="btn btn-danger btn-sm my-1">Xóa</a>
-                </td>
+                <th>Tên</th>
+                <th>Giá</th>
+                <th style="width: 250px;">Mô tả</th> @* <-- Giới hạn chiều rộng cột Mô tả *@
+                <th>Tồn kho</th>
+                <th>Ảnh</th>
+                <th>Ngày tạo</th>
+                <th>Danh mục</th>
+                <th>Kích thước</th>
+                <th>Màu sắc</th>
+                <th>Sản phẩm cha</th>
+                <th style="width: 150px;"></th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="11" class="text-center text-muted">Không có sản phẩm nào được tìm thấy.</td>
+                </tr>
+            }
+            @foreach(var item in Model)
+            {
+                <tr>
+                    <td>@item.ProductName</td>
+                    <td>@item.Price.ToString("N0") ₫</td>
+                    
+                    @* BẮT ĐẦU: RÚT GỌN VÀ HIỂN THỊ MÔ TẢ GỌN GÀNG *@
+                    <td style="max-width: 250px; overflow: hidden; vertical-align: top;"> @* Thêm vertical-align *@
+                        @{
+                            var maxLen = 100;
+                            var rawDescription = item.Description ?? "";
+                            
+                            // 1. Loại bỏ các ký tự xuống dòng (\n, CHAR(10)) để mô tả hiển thị trên một dòng liên tục trong bảng
+                            var cleanDescription = rawDescription.Replace(System.Environment.NewLine, " ").Replace("\n", " ").Replace(char.ConvertFromUtf32(10), " ");
+                            
+                            // 2. Cắt ngắn chuỗi đã được làm sạch
+                            var shortDesc = cleanDescription.Length > maxLen 
+                                ? cleanDescription.Substring(0, maxLen) + "..." 
+                                : cleanDescription;
+                        }
+                        
+                        <div style="max-height: 80px; overflow: hidden; text-overflow: ellipsis;">
+                            <span title="@shortDesc">@shortDesc</span> @* Thêm tooltip để xem nhanh *@
+                        </div>
+                        
+                        @if (rawDescription.Length > maxLen)
+                        {
+                            // Nút mở Modal để xem chi tiết
+                            <button type="button" class="btn btn-link btn-sm p-0 mt-1" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#descriptionModal"
+                                    data-title="@item.ProductName"
+                                    data-description="@rawDescription.Replace("'", "&#39;")"> 
+                                Xem chi tiết
+                            </button>
+                        }
+                    </td>
+                    @* KẾT THÚC: RÚT GỌN VÀ HIỂN THỊ MÔ TẢ GỌN GÀNG *@
+
+                    <td>@item.StockQuantity</td>
+                    <td><img src="@item.ImageUrl" alt="@item.ProductName" style="height:50px; width:50px; object-fit:cover;" /></td>
+                    <td>@item.CreatedAt.ToString("dd/MM/yyyy")</td>
+                    <td>@item.Category?.CategoryName</td>
+                    <td>@item.Size</td>
+                    <td>@item.Color</td>
+                    <td>@(item.ParentProduct?.ProductName ?? "Không có")</td>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@item.ProductId" class="btn btn-dark btn-sm my-1">Chi tiết</a>
+                        <a asp-action="Edit" asp-route-id="@item.ProductId" class="btn btn-warning btn-sm my-1">Sửa</a>
+                        <a asp-action="Delete" asp-route-id="@item.ProductId" class="btn btn-danger btn-sm my-1">Xóa</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="descriptionModal" tabindex="-1" aria-labelledby="descriptionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="descriptionModalLabel">Chi tiết Mô tả Sản phẩm</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h4 id="modal-product-title" class="fw-bold mb-3"></h4>
+                <div id="modal-product-description" style="white-space: pre-wrap;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    // JavaScript để cập nhật nội dung Modal khi nó được mở
+    var descriptionModal = document.getElementById('descriptionModal');
+    if (descriptionModal) {
+        descriptionModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget; 
+            
+            var title = button.getAttribute('data-title');
+            var description = button.getAttribute('data-description');
+
+            var modalTitle = document.getElementById('modal-product-title');
+            var modalBody = document.getElementById('modal-product-description');
+
+            modalTitle.textContent = title;
+            modalBody.textContent = description; 
+        });
+    }
+</script>
+}

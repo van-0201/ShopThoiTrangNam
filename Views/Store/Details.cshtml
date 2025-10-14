@@ -190,7 +190,7 @@ $(document).ready(function () {
                     }
                 } else {
                     // Nếu không tìm thấy biến thể khớp
-                    $("#productStock").text("0 (Không có biến thể này)");
+                    $("#productStock").text("0 (Hết hàng)");
                     $("#addToCartBtn").prop("disabled", true);
                     $("#addToCartBtn").data("product-id", 0); 
                 }
@@ -232,15 +232,20 @@ $(document).ready(function () {
             data: { productId: productId, quantity: quantity },
             success: function (response) {
                 if (response.success) {
-                    // Cập nhật số lượng giỏ hàng trên _Layout (chúng ta đã thêm ID này vào _Layout)
                     $("#cart-count-badge").text(response.cartCount); 
                     alert("Đã thêm vào giỏ hàng!");
                 } else {
                     alert(response.message || "Có lỗi xảy ra!");
                 }
             },
-            error: function () {
-                alert("Lỗi server, vui lòng thử lại.");
+            error: function (xhr, status, error) {
+                if (xhr.status === 401) {
+                    // MÃ 401: UNAUTHORIZED (Chưa đăng nhập)
+                    alert("Bạn phải đăng nhập để thêm sản phẩm vào giỏ hàng!");
+                } else {
+                    // Các lỗi server khác
+                    alert("Lỗi server, vui lòng thử lại. Mã lỗi: " + xhr.status);
+                }
             }
         });
     });

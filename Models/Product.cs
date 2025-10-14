@@ -23,7 +23,7 @@ namespace ShopThoiTrangNam.Models
         public decimal Price { get; set; }
 
         [Required(ErrorMessage = "Mô tả sản phẩm là bắt buộc")]    
-        [StringLength(255, ErrorMessage = "Mô tả không được vượt quá 255 ký tự")]
+        [StringLength(int.MaxValue)]
         public string? Description { get; set; }
 
         [Required(ErrorMessage = "Số lượng tồn kho là bắt buộc")]

@@ -1,14 +1,13 @@
 @model IEnumerable<ShopThoiTrangNam.Models.Product>
 @{
     ViewData["Title"] = "Sản phẩm";
-    // Đảm bảo ViewBags được truy cập đúng cách
     var categories = ViewBag.Categories as List<ShopThoiTrangNam.Models.Category>;
     int? selectedCategory = ViewBag.SelectedCategory;
 }
 
-<div class="container-fluid px-3 my-4"> @* Thêm margin (my-4) để có khoảng trống bên trên *@
-    <div class="row"> @* <-- BẮT ĐẦU HÀNG CHỨA SIDEBAR VÀ DANH SÁCH SẢN PHẨM *@
-        
+<div class="container-fluid px-3 my-4"> 
+    <div class="row"> 
+       
         <div class="col-12 col-md-3 mb-4 mb-md-0">
             <h5 class="fw-bold border-bottom pb-2">Danh mục sản phẩm</h5>
             <ul class="list-group">

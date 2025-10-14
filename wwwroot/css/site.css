@@ -13,3 +13,39 @@ main {
     flex: 1; 
 }
 
+/* Tùy chỉnh nút Đăng nhập ngoài (Google/Facebook) */
+.col-md-6.col-md-offset-2 {
+    /* Để các nút nằm giữa và gọn hơn */
+    text-align: center;
+}
+
+.col-md-6.col-md-offset-2 button {
+    /* Áp dụng styling chung cho nút */
+    display: inline-flex; /* Quan trọng để đặt icon và text cạnh nhau */
+    align-items: center;
+    justify-content: center;
+    width: 200px; /* Chiều rộng cố định */
+    padding: 10px;
+    margin: 5px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+/* Nút Google (có thể cần icon tùy chỉnh hoặc CSS cho class 'google') */
+.col-md-6.col-md-offset-2 button[value="Google"] {
+    background-color: #ffffff;
+    color: #444;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Nút Facebook */
+.col-md-6.col-md-offset-2 button[value="Facebook"] {
+    background-color: #1877f2; /* Màu xanh Facebook */
+    color: white;
+    border: none;
+}
+
+

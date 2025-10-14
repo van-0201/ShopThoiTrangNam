@@ -11,13 +11,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity; 
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using ShopThoiTrangNam.Models;
+using System.Linq; 
 
 namespace ShopThoiTrangNam.Areas.Identity.Pages.Account
 {
@@ -30,13 +31,15 @@ namespace ShopThoiTrangNam.Areas.Identity.Pages.Account
         private readonly IUserEmailStore<ApplicationUser> _emailStore;
         private readonly IEmailSender _emailSender;
         private readonly ILogger<ExternalLoginModel> _logger;
+        private readonly RoleManager<IdentityRole> _roleManager; 
 
         public ExternalLoginModel(
             SignInManager<ApplicationUser> signInManager,
             UserManager<ApplicationUser> userManager,
             IUserStore<ApplicationUser> userStore,
             ILogger<ExternalLoginModel> logger,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            RoleManager<IdentityRole> roleManager) 
         {
             _signInManager = signInManager;
             _userManager = userManager;
@@ -44,44 +47,21 @@ namespace ShopThoiTrangNam.Areas.Identity.Pages.Account
             _emailStore = GetEmailStore();
             _logger = logger;
             _emailSender = emailSender;
+            _roleManager = roleManager; 
         }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         [BindProperty]
         public InputModel Input { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         public string ProviderDisplayName { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         public string ReturnUrl { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         [TempData]
         public string ErrorMessage { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         public class InputModel
         {
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
             [Required]
             [EmailAddress]
             public string Email { get; set; }
@@ -117,7 +97,8 @@ namespace ShopThoiTrangNam.Areas.Identity.Pages.Account
             if (result.Succeeded)
             {
                 _logger.LogInformation("{Name} logged in with {LoginProvider} provider.", info.Principal.Identity.Name, info.LoginProvider);
-                return LocalRedirect(returnUrl);
+                // Chuyển hướng thẳng về trang chủ để tránh màn hình "Log out"
+                return LocalRedirect(Url.Content("~/")); 
             }
             if (result.IsLockedOut)
             {
@@ -163,6 +144,30 @@ namespace ShopThoiTrangNam.Areas.Identity.Pages.Account
                     result = await _userManager.AddLoginAsync(user, info);
                     if (result.Succeeded)
                     {
+                        // LOGIC GÁN ROLE "Customer" (Giữ nguyên)
+                        const string defaultRole = "Customer";
+                        
+                        if (await _roleManager.RoleExistsAsync(defaultRole))
+                        {
+                            var roleResult = await _userManager.AddToRoleAsync(user, defaultRole);
+                            
+                            if (roleResult.Succeeded)
+                            {
+                                _logger.LogInformation("User created an account using {Name} provider and assigned '{Role}' role.", 
+                                    info.LoginProvider, defaultRole);
+                            }
+                            else
+                            {
+                                _logger.LogError("Failed to assign '{Role}' role to new user. Errors: {Errors}", 
+                                    defaultRole, string.Join(", ", roleResult.Errors.Select(e => e.Description)));
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Role '{Role}' does not exist. User created without default role.", defaultRole);
+                        }
+                        // ------------------------------------
+
                         _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
 
                         var userId = await _userManager.GetUserIdAsync(user);
@@ -184,7 +189,8 @@ namespace ShopThoiTrangNam.Areas.Identity.Pages.Account
                         }
 
                         await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
-                        return LocalRedirect(returnUrl);
+                        // Chuyển hướng thẳng về trang chủ khi đăng ký thành công
+                        return LocalRedirect(Url.Content("~/")); 
                     }
                 }
                 foreach (var error in result.Errors)
