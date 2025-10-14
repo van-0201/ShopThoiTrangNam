@@ -6,13 +6,22 @@ using Microsoft.AspNetCore.Authentication;
 var builder = WebApplication.CreateBuilder(args);
 
 // =======================================
-// PHẦN THIẾT LẬP DỊCH VỤ (SERVICES)
+// SERVICES CONFIGURATION
 // =======================================
 
+// Cấu hình DbContext sử dụng chuỗi kết nối DefaultConnection
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// THIẾT LẬP SESSION
+// Cấu hình Identity
+builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = false;
+})
+.AddRoles<IdentityRole>()
+.AddEntityFrameworkStores<ApplicationDbContext>();
+
+// Cấu hình Session
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -21,13 +30,7 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
-{
-    options.SignIn.RequireConfirmedAccount = false;
-})
-.AddRoles<IdentityRole>()
-.AddEntityFrameworkStores<ApplicationDbContext>();
-
+// Cấu hình Cookie cho Identity
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
@@ -37,16 +40,14 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
 });
 
-// THÊM XÁC THỰC BÊN NGOÀI
+// Thêm Xác thực bên ngoài (Google, Facebook)
 builder.Services.AddAuthentication()
-    // Google
     .AddGoogle(options =>
     {
         options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
         options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
         options.AccessType = "offline";
     })
-    // Facebook
     .AddFacebook(options =>
     {
         options.AppId = builder.Configuration["Authentication:Facebook:AppId"];
@@ -57,16 +58,17 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
 // =======================================
-// PHẦN CẤU HÌNH HTTP PIPELINE
+// MIDDLEWARE HTTP PIPELINE
 // =======================================
 
 var app = builder.Build();
 
-// Seed roles and users
+// Áp dụng Migration và Seed Data (Chỉ nên dùng cho Development/Staging)
 using (var scope = app.Services.CreateScope())
 {
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var serviceProvider = scope.ServiceProvider;
+    var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
     // Create Roles
     string[] roleNames = { "Admin", "Customer" };
@@ -116,15 +118,16 @@ using (var scope = app.Services.CreateScope())
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
+    // The default HSTS value is 30 days.
+    app.UseHsts(); 
 }
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-app.UseSession();
-
 app.UseRouting();
+
+app.UseSession();
 
 app.UseAuthentication();
 app.UseAuthorization();
