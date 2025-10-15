@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using ShopThoiTrangNam.Models;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 namespace ShopThoiTrangNam.Controllers
 {
@@ -21,7 +20,7 @@ namespace ShopThoiTrangNam.Controllers
             _userManager = userManager;
         }
 
-        // ✅ Xem giỏ hàng
+        // Xem giỏ hàng
         public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -37,7 +36,7 @@ namespace ShopThoiTrangNam.Controllers
             return View(cartItems);
         }
 
-        // ✅ Thêm vào giỏ hàng (AJAX)
+        // Thêm vào giỏ hàng (AJAX) - Nhận productId và quantity.
         [HttpPost]
         public async Task<IActionResult> AddToCart(int productId, int quantity = 1)
         {
@@ -82,7 +81,7 @@ namespace ShopThoiTrangNam.Controllers
             return Json(new { success = true, cartCount, message = "Đã thêm vào giỏ hàng thành công!" });
         }
         
-        // ✅ Xóa sản phẩm trong giỏ
+        // Xóa sản phẩm trong giỏ
         [HttpPost]
         public async Task<IActionResult> Remove(int id)
         {
@@ -98,7 +97,7 @@ namespace ShopThoiTrangNam.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // ✅ Cập nhật số lượng - TRẢ VỀ JSON CHO AJAX
+        // Cập nhật số lượng - TRẢ VỀ JSON CHO AJAX - Nhận id và quantity
         [HttpPost]
         public async Task<IActionResult> UpdateQuantity(int id, int quantity)
         {

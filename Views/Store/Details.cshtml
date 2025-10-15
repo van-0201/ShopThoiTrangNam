@@ -5,7 +5,7 @@
     var related = ViewBag.RelatedProducts as List<ShopThoiTrangNam.Models.Product>;
     var variants = ViewBag.Variants as List<ShopThoiTrangNam.Models.Product>;
 
-    // Lấy ProductId gốc để truyền vào JS (dùng cho việc tìm biến thể)
+    // Lấy ProductId gốc để truyền vào JS
     var rootProductId = Model.ParentProductId ?? Model.ProductId;
 }
 
@@ -135,123 +135,157 @@
 </div>
 
 @section Scripts {
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-$(document).ready(function () {
-    // ID gốc của nhóm sản phẩm
-    const rootProductId = @rootProductId;
+    document.addEventListener('DOMContentLoaded', function () {
+        // ID gốc của nhóm sản phẩm
+        const rootProductId = @rootProductId;
+        const productImage = document.getElementById('productImage');
+        const productPrice = document.getElementById('productPrice');
+        const productStock = document.getElementById('productStock');
+        const addToCartBtn = document.getElementById('addToCartBtn');
+        const allOptionBoxes = document.querySelectorAll('.option-box');
+        
+        // --- CHỨC NĂNG CHUNG ---
+        
+        function getSelectedOptions() {
+            const activeColor = document.querySelector(".color-option.active");
+            const activeSize = document.querySelector(".size-option.active");
 
-    // Kích hoạt biến thể hiện tại (biến thể đang được tải từ URL)
-    const initialColor = "@Model.Color";
-    const initialSize = "@Model.Size";
-    
-    // Đặt trạng thái active ban đầu
-    if (initialColor) {
-        $(`.color-option[data-color="${initialColor}"]`).addClass('active');
-    }
-    if (initialSize) {
-        $(`.size-option[data-size="${initialSize}"]`).addClass('active');
-    }
-
-    function getSelectedOptions() {
-        const color = $(".color-option.active").data("color");
-        const size = $(".size-option.active").data("size");
-        return { color, size };
-    }
-
-    function updateVariant() {
-        const { color, size } = getSelectedOptions();
-
-        // Chỉ tìm biến thể khi cả màu và size đã được chọn
-        if (!color || !size) {
-            $("#productStock").text("Vui lòng chọn cả màu và kích cỡ");
-            $("#addToCartBtn").prop("disabled", true);
-            $("#addToCartBtn").data("product-id", 0); 
-            return;
+            return {
+                color: activeColor ? activeColor.dataset.color : null,
+                size: activeSize ? activeSize.dataset.size : null
+            };
         }
 
-        $.ajax({
-            url: '@Url.Action("GetVariant", "Store")',
-            type: 'GET',
-            data: { parentId: rootProductId, color: color, size: size },
-            success: function (data) {
-                if (data) {
+        // --- 1. TÌM BIẾN THỂ (UPDATE VARIANT) - SỬ DỤNG FETCH API ---
+        
+        async function updateVariant() {
+            const { color, size } = getSelectedOptions();
+            
+            // Chỉ tìm biến thể khi cả màu và size đã được chọn
+            if (!color || !size) {
+                productStock.textContent = "@Model.StockQuantity.ToString()"; // Hiển thị tồn kho mặc định của sản phẩm gốc (nếu có)
+                addToCartBtn.disabled = @(Model.StockQuantity == 0 ? "true" : "false");
+                // Giữ lại ProductId mặc định cho đến khi chọn biến thể
+                addToCartBtn.dataset.productId = @Model.ProductId; 
+                return;
+            }
+
+            // Dùng ProductId gốc để tìm các biến thể
+            const url = `@Url.Action("GetVariant", "Store")?parentId=${rootProductId}&color=${color}&size=${size}`;
+
+            try {
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`Lỗi HTTP! Status: ${response.status}`);
+                }
+                
+                const data = await response.json(); // Phản hồi từ controller trả về JSON
+
+                if (data && data.productId > 0) { // Kiểm tra data.productId để đảm bảo biến thể được tìm thấy
                     // Cập nhật thông tin sản phẩm
-                    $("#productImage").attr("src", data.imageUrl);
-                    $("#productPrice").text(data.price + " ₫");
-                    $("#productStock").text(data.stockQuantity);
+                    productImage.src = data.imageUrl;
+                    productPrice.textContent = data.price + " ₫";
+                    productStock.textContent = data.stockQuantity;
                     
-                    // QUAN TRỌNG: Cập nhật ProductId và trạng thái cho nút "Thêm vào giỏ"
-                    $("#addToCartBtn").data("product-id", data.productId);
-                    $("#addToCartBtn").prop("disabled", data.stockQuantity === 0);
+                    // Cập nhật ProductId và trạng thái cho nút "Thêm vào giỏ"
+                    addToCartBtn.dataset.productId = data.productId;
+                    addToCartBtn.disabled = data.stockQuantity === 0;
                     
                     if (data.stockQuantity === 0) {
-                        $("#productStock").text("0 (Hết hàng)");
+                        productStock.textContent = "0 (Hết hàng)";
                     }
                 } else {
                     // Nếu không tìm thấy biến thể khớp
-                    $("#productStock").text("0 (Hết hàng)");
-                    $("#addToCartBtn").prop("disabled", true);
-                    $("#addToCartBtn").data("product-id", 0); 
+                    productStock.textContent = "0 (Hết hàng)";
+                    addToCartBtn.disabled = true;
+                    addToCartBtn.dataset.productId = 0; // Đặt về 0 để ngăn thêm vào giỏ
                 }
-            },
-            error: function () {
-                 $("#productStock").text("Lỗi tải dữ liệu");
-                 $("#addToCartBtn").prop("disabled", true);
+            } catch (error) {
+                console.error("Lỗi khi tải biến thể:", error);
+                productStock.textContent = "Lỗi tải dữ liệu";
+                addToCartBtn.disabled = true;
             }
-        });
-    }
-
-    // Xử lý chung cho cả màu và size
-    $(document).on("click", ".option-box", function () {
-        const optionType = $(this).data("option-type"); // Lấy loại: 'color' hoặc 'size'
-        
-        // Bỏ active của tất cả các ô cùng loại
-        $(`.${optionType}-option`).removeClass("active"); 
-        
-        // Thêm active cho ô được click
-        $(this).addClass("active");
-        
-        updateVariant();
-    });
-
-    // Thêm vào giỏ
-    $("#addToCartBtn").click(function () {
-        const productId = $(this).data("product-id");
-        if (productId <= 0) {
-            alert("Vui lòng chọn biến thể sản phẩm hợp lệ.");
-            return;
         }
+        
+        // --- 2. THÊM VÀO GIỎ HÀNG (ADD TO CART) - SỬ DỤNG FETCH API ---
 
-        const quantity = 1;
+        async function addToCartHandler() {
+            const productId = parseInt(addToCartBtn.dataset.productId);
+            if (productId <= 0 || addToCartBtn.disabled) {
+                alert("Vui lòng chọn biến thể sản phẩm hợp lệ và còn hàng.");
+                return;
+            }
 
-        // AJAX call để thêm vào giỏ hàng
-        $.ajax({
-            url: '@Url.Action("AddToCart", "ShoppingCart")',
-            type: 'POST',
-            data: { productId: productId, quantity: quantity },
-            success: function (response) {
-                if (response.success) {
-                    $("#cart-count-badge").text(response.cartCount); 
+            const quantity = 1;
+            const url = '@Url.Action("AddToCart", "ShoppingCart")';
+            
+            // Sửa lỗi: Sử dụng URLSearchParams để gửi dữ liệu dưới dạng form data
+            const formData = new URLSearchParams();
+            formData.append('productId', productId);
+            formData.append('quantity', quantity);
+
+            try {
+                // Controller mong đợi dữ liệu dưới dạng Form Data/Query String, không phải JSON.
+                const response = await fetch(url, {
+                    method: 'POST',
+                    // Bỏ 'Content-Type': 'application/json' để gửi form data
+                    body: formData 
+                });
+
+                if (!response.ok) {
+                    // Xử lý lỗi 401 (Chưa đăng nhập)
+                    if (response.status === 401) {
+                        alert("Bạn phải đăng nhập để thêm sản phẩm vào giỏ hàng!");
+                        return;
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Cập nhật số lượng item trên badge giỏ hàng (nếu có)
+                    const cartCountBadge = document.getElementById('cart-count-badge');
+                    if (cartCountBadge) {
+                        cartCountBadge.textContent = data.cartCount; 
+                    }
                     alert("Đã thêm vào giỏ hàng!");
                 } else {
-                    alert(response.message || "Có lỗi xảy ra!");
+                    // Xử lý lỗi logic trả về từ Controller (ví dụ: hết hàng, số lượng không hợp lệ)
+                    alert(data.message || "Có lỗi xảy ra!");
                 }
-            },
-            error: function (xhr, status, error) {
-                if (xhr.status === 401) {
-                    // MÃ 401: UNAUTHORIZED (Chưa đăng nhập)
-                    alert("Bạn phải đăng nhập để thêm sản phẩm vào giỏ hàng!");
-                } else {
-                    // Các lỗi server khác
-                    alert("Lỗi server, vui lòng thử lại. Mã lỗi: " + xhr.status);
-                }
+            } catch (error) {
+                console.error("Lỗi Fetch/Server:", error);
+                alert("Lỗi server, vui lòng thử lại.");
             }
-        });
-    });
+        }
+        
+        // --- THIẾT LẬP SỰ KIỆN ---
 
-    // Gọi lần đầu để đảm bảo hiển thị đúng trạng thái tồn kho của biến thể hiện tại
-    updateVariant(); 
-});
+        // 1. Lắng nghe sự kiện click cho các ô tùy chọn (màu/size)
+        allOptionBoxes.forEach(box => {
+            box.addEventListener("click", function () {
+                const optionType = this.dataset.optionType; 
+                
+                // Bỏ active của tất cả các ô cùng loại
+                document.querySelectorAll(`.${optionType}-option`).forEach(opt => {
+                    opt.classList.remove("active");
+                });
+                
+                // Thêm active cho ô được click
+                this.classList.add("active");
+                
+                updateVariant();
+            });
+        });
+        
+        // 2. Lắng nghe sự kiện click cho nút "Thêm vào giỏ"
+        addToCartBtn.addEventListener('click', addToCartHandler);
+
+        // Gọi lần đầu để đảm bảo hiển thị đúng trạng thái tồn kho của biến thể hiện tại
+        updateVariant(); 
+    });
 </script>
 }
