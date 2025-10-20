@@ -2,7 +2,6 @@
 
 @{
     ViewData["Title"] = "Giỏ hàng của bạn";
-    decimal totalAmount = Model.Sum(i => i.Price * i.Quantity); 
 }
 
 <div class="container my-5">
@@ -11,7 +10,7 @@
     @if (!Model.Any())
     {
         <div class="alert alert-info text-center">
-            Giỏ hàng của bạn hiện đang trống. 	
+            Giỏ hàng của bạn hiện đang trống.
             <a asp-controller="Store" asp-action="Index" class="alert-link">Tiếp tục mua sắm</a>.
         </div>
     }
@@ -20,6 +19,9 @@
         <table id="cart-table" class="table table-bordered align-middle shadow-sm">
             <thead class="table-dark text-center">
                 <tr>
+                    <th style="width: 50px;">
+                        <input class="form-check-input" type="checkbox" id="check-all" />
+                    </th>
                     <th>Ảnh</th>
                     <th>Sản phẩm</th>
                     <th>Màu</th>
@@ -34,8 +36,12 @@
                 @foreach (var item in Model)
                 {
                     var product = item.Product;
-                    // Lấy giá dưới dạng số cho JS tính toán
+                    // Thuộc tính data-price dùng để JS tính toán
                     <tr class="cart-row" data-cart-id="@item.CartId" data-price="@item.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)">
+                        
+                        <td class="text-center">
+                            <input class="form-check-input item-checkbox" type="checkbox" data-cart-id="@item.CartId" />
+                        </td>
                         <td style="width:120px; text-align:center;">
                             <img src="@product?.ImageUrl" alt="@product?.ProductName" class="img-thumbnail" style="width:100px; height:100px; object-fit:cover;" />
                         </td>
@@ -48,12 +54,12 @@
                         <td class="text-end text-danger item-price">@item.Price.ToString("N0") ₫</td>
                         <td class="text-center" style="width:140px;">
                             <input type="number" 
-                                            name="quantity" 
-                                            value="@item.Quantity" 
-                                            min="1" 
-                                            class="form-control text-center quantity-input" 
-                                            data-cart-id="@item.CartId"
-                                            style="width:80px; display:inline-block;" />
+                                    name="quantity" 
+                                    value="@item.Quantity" 
+                                    min="1" 
+                                    class="form-control text-center quantity-input" 
+                                    data-cart-id="@item.CartId"
+                                    style="width:80px; display:inline-block;" />
                         </td>
                         <td class="text-end fw-bold text-primary item-total">@((item.Price * item.Quantity).ToString("N0")) ₫</td>
                         <td class="text-center">
@@ -73,9 +79,9 @@
             <div class="text-end">
                 <h5 class="fw-bold">
                     Tổng cộng: 
-                    <span class="text-danger" id="grand-total">@totalAmount.ToString("N0") ₫</span>
+                    <span class="text-danger" id="grand-total">0 ₫</span>
                 </h5>
-                <a href="#" class="btn btn-success px-4 mt-2">Thanh toán</a>
+                <a href="#" id="checkout-btn" class="btn btn-outline-danger px-4 disabled">Mua ngay</a>
             </div>
         </div>
     }
@@ -84,70 +90,96 @@
 @section Scripts {
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Hàm định dạng số tiền (Đảm bảo định dạng tiền tệ Việt Nam)
+        
+        // Lấy các phần tử DOM
+        const checkAllBox = document.getElementById('check-all');
+        const itemCheckBoxes = document.querySelectorAll('.item-checkbox');
+        const quantityInputs = document.querySelectorAll('.quantity-input');
+        const grandTotalEl = document.getElementById('grand-total');
+        const checkoutBtn = document.getElementById('checkout-btn');
+        let debounceTimeout = null;
+
+        // 1. HÀM ĐỊNH DẠNG TIỀN TỆ (An toàn)
         function formatCurrency(number) {
-            return number.toLocaleString('vi-VN');
+            const numericValue = Number(number);
+            if (isNaN(numericValue)) {
+                return "0 ₫"; // Trả về 0 ₫ nếu không phải là số
+            }
+            // Thêm ' ₫' vào cuối
+            return numericValue.toLocaleString('vi-VN') + ' ₫';
         }
 
-        // Hàm cập nhật tổng tiền cho một hàng và Tổng cộng chung
-        function updateTotals(cartId, newQuantity) {
-            const row = document.querySelector(`.cart-row[data-cart-id="${cartId}"]`);
-            if (!row) return;
-
-            // Đảm bảo dấu thập phân là dấu chấm để parseFloat hoạt động chính xác
-            const price = parseFloat(row.dataset.price.replace(/,/g, '.'));
-            
-            if (isNaN(price)) return;
-
-            const itemTotal = price * newQuantity;
-
-            // 1. Cập nhật Tổng tiền của hàng
-            row.querySelector('.item-total').textContent = formatCurrency(itemTotal) + ' ₫';
-
-            // 2. Cập nhật Tổng cộng chung
+        // 2. HÀM TÍNH TOÁN VÀ CẬP NHẬT TỔNG TIỀN
+        function updateGrandTotal() {
             let grandTotal = 0;
+            let itemsSelected = 0;
+
             document.querySelectorAll('.cart-row').forEach(function(cartRow) {
-                const rowPrice = parseFloat(cartRow.dataset.price.replace(/,/g, '.'));
-                const rowQuantity = parseInt(cartRow.querySelector('.quantity-input').value);
-                if (!isNaN(rowPrice) && !isNaN(rowQuantity)) {
-                    grandTotal += rowPrice * rowQuantity;
+                const checkbox = cartRow.querySelector('.item-checkbox');
+                
+                if (checkbox && checkbox.checked) {
+                    const rowPrice = parseFloat(cartRow.dataset.price.replace(/,/g, '.'));
+                    // Thêm 10 để đảm bảo parseInt dùng hệ thập phân
+                    const rowQuantity = parseInt(cartRow.querySelector('.quantity-input').value, 10); 
+                    
+                    if (!isNaN(rowPrice) && !isNaN(rowQuantity)) {
+                        grandTotal += rowPrice * rowQuantity;
+                        itemsSelected++;
+                    }
                 }
             });
 
-            document.getElementById('grand-total').textContent = formatCurrency(grandTotal) + ' ₫';
+            // Cập nhật text Tổng cộng
+            grandTotalEl.textContent = formatCurrency(grandTotal);
+
+            // Cập nhật trạng thái nút "Mua ngay"
+            if (itemsSelected > 0) {
+                checkoutBtn.classList.remove('disabled');
+            } else {
+                checkoutBtn.classList.add('disabled');
+            }
+
+            // Cập nhật trạng thái nút "Chọn tất cả"
+            if (checkAllBox && itemCheckBoxes.length > 0) {
+                
+                // === SỬA LỖI TYPO (itemCheckBoxES -> itemCheckBoxes) ===
+                if (itemsSelected === itemCheckBoxes.length) { 
+                    checkAllBox.checked = true;
+                    checkAllBox.indeterminate = false; 
+                } else if (itemsSelected > 0) {
+                    checkAllBox.checked = false;
+                    checkAllBox.indeterminate = true; 
+                } else {
+                    checkAllBox.checked = false;
+                    checkAllBox.indeterminate = false;
+                }
+            }
         }
 
-        // Hàm gọi Fetch API để cập nhật số lượng trong DB
+        // 3. HÀM GỌI API CẬP NHẬT SỐ LƯỢNG
         async function updateQuantityInDb(cartId, quantity) {
             const url = '@Url.Action("UpdateQuantity", "ShoppingCart")';
-
-            // Sửa lỗi: Sử dụng URLSearchParams để gửi dữ liệu dưới dạng form data
             const formData = new URLSearchParams();
             formData.append('id', cartId);
             formData.append('quantity', quantity);
 
             try {
-                // Controller mong đợi dữ liệu dưới dạng Form Data/Query String, không phải JSON.
                 const response = await fetch(url, {
                     method: 'POST',
-                    // Bỏ 'Content-Type': 'application/json' để gửi form data
-                    body: formData 
+                    body: formData
                 });
-
-                // Xử lý lỗi HTTP (4xx, 5xx)
+                
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-
+                
                 const data = await response.json();
-
+                
                 if (data.success) {
-                    console.log("Cập nhật giỏ hàng thành công!");
+                    console.log("Cập nhật số lượng thành công!");
                 } else {
-                    // Xử lý lỗi logic (ví dụ: số lượng vượt quá tồn kho)
                     alert(data.message || "Không thể cập nhật giỏ hàng.");
-                    // Tải lại trang để đồng bộ
-                    location.reload(); 
+                    location.reload();
                 }
             } catch (error) {
                 console.error("Lỗi server khi cập nhật giỏ hàng:", error);
@@ -156,36 +188,90 @@
             }
         }
 
-        // ----------------------------------------------------
-        // Xử lý sự kiện khi số lượng thay đổi (Fetch API)
-        // ----------------------------------------------------
-        let timeout = null;
-        
-        document.querySelectorAll('.quantity-input').forEach(inputElement => {
+        // --- GÁN SỰ KIỆN ---
+
+        // 4. SỰ KIỆN KHI THAY ĐỔI SỐ LƯỢNG
+        quantityInputs.forEach(inputElement => {
             inputElement.addEventListener('input', function () {
                 const cartId = this.dataset.cartId;
-                let newQuantity = parseInt(this.value);
+                let newQuantity = parseInt(this.value, 10);
 
                 if (newQuantity < 1 || isNaN(newQuantity)) {
-                    newQuantity = 1;
+                    newQuantity = 1; 
                     this.value = 1;
                 }
 
-                // Cập nhật tổng tiền tức thì trên giao diện
-                updateTotals(cartId, newQuantity);
-
-                // Xóa timeout cũ nếu có (debounce)
-                if (timeout) {
-                    clearTimeout(timeout);
+                // Cập nhật tổng tiền của hàng
+                const row = this.closest('.cart-row');
+                const price = parseFloat(row.dataset.price.replace(/,/g, '.'));
+                if (!isNaN(price)) {
+                    const itemTotal = price * newQuantity;
+                    row.querySelector('.item-total').textContent = formatCurrency(itemTotal);
                 }
 
-                // Đặt timeout mới để gọi Fetch API sau 500ms
-                timeout = setTimeout(function () {
-                    // Gọi hàm Fetch API
+                // Cập nhật TỔNG CỘNG CHUNG (chỉ khi item này được check)
+                updateGrandTotal();
+
+                // Debounce gọi API
+                if (debounceTimeout) clearTimeout(debounceTimeout);
+                debounceTimeout = setTimeout(function () {
                     updateQuantityInDb(cartId, newQuantity);
-                }, 500);
+                }, 500); // 500ms
             });
         });
+
+        // 5. SỰ KIỆN KHI BẤM CHECKBOX "CHỌN TẤT CẢ"
+        if(checkAllBox) {
+            checkAllBox.addEventListener('change', function () {
+                const isChecked = this.checked;
+                itemCheckBoxes.forEach(box => {
+                    box.checked = isChecked;
+                });
+                updateGrandTotal();
+            });
+        }
+
+        // 6. SỰ KIỆN KHI BẤM CHECKBOX CỦA TỪNG MỤC
+        itemCheckBoxes.forEach(box => {
+            box.addEventListener('change', function () {
+                updateGrandTotal();
+            });
+        });
+        
+        // 7. SỰ KIỆN KHI BẤM NÚT "MUA NGAY" (Checkout)
+        if(checkoutBtn) {
+            checkoutBtn.addEventListener('click', function(e) {
+                e.preventDefault(); 
+                
+                if (this.classList.contains('disabled')) {
+                    alert("Vui lòng chọn ít nhất một sản phẩm để thanh toán.");
+                    return;
+                }
+
+                const selectedIds = [];
+                document.querySelectorAll('.item-checkbox:checked').forEach(cb => {
+                    selectedIds.push(cb.dataset.cartId);
+                });
+
+                if (selectedIds.length === 0) {
+                    alert("Vui lòng chọn ít nhất một sản phẩm để thanh toán.");
+                    return;
+                }
+                
+                const params = new URLSearchParams();
+                selectedIds.forEach(id => {
+                    params.append('cartItemIds', id);
+                });
+
+                const url = `@Url.Action("Index", "Checkout")?${params.toString()}`;
+                
+                window.location.href = url;
+            });
+        }
+        
+        // Gọi lần đầu khi tải trang để tính tổng tiền (ban đầu là 0)
+        updateGrandTotal();
+
     });
 </script>
 }

@@ -1,0 +1,107 @@
+@model ShopThoiTrangNam.Models.Order
+@using ShopThoiTrangNam.Helpers
+
+@{
+    ViewData["Title"] = "Chi tiết đơn hàng #" + Model.OrderId;
+}
+
+<div class="container my-5">
+    <a asp-action="Index" class="btn btn-outline-secondary mb-3">← Quay lại danh sách</a>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Thông tin khách hàng</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Tên:</strong> @Model.User.UserName</p>
+                    <p><strong>Email:</strong> @Model.User.Email</p>
+                    <p><strong>SĐT:</strong> @Model.Phone</p>
+                    <p><strong>Địa chỉ:</strong> @Model.ShippingAddress</p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Cập nhật trạng thái</h5>
+                </div>
+                <div class="card-body">
+                    <p>Trạng thái hiện tại: <strong class="h5">@Model.Status.GetStatusText()</strong></p>
+                    
+                    <form asp-action="UpdateStatus" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="orderId" value="@Model.OrderId" />
+                        
+                        <div class="mb-3">
+                            <label for="newStatus" class="form-label fw-bold">Chọn trạng thái mới:</label>
+                            <select name="newStatus" class="form-select" id="newStatus">
+                                <option value="0">0 - Đang chờ xử lý</option>
+                                <option value="1">1 - Đã chuẩn bị hàng</option>
+                                <option value="2">2 - Đang giao hàng</option>
+                                <option value="3">3 - Đã giao thành công</option>
+                                <option value="4">4 - Đã hủy</option>
+                                </select>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary" onclick="return confirm('Bạn có chắc muốn cập nhật trạng thái này?')">
+                                Cập nhật
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <h4 class="fw-semibold">Các sản phẩm trong đơn (#@Model.OrderId)</h4>
+            <div class="card shadow-sm">
+                <ul class="list-group list-group-flush">
+                    @foreach (var item in Model.OrderDetails)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <img src="@item.Product?.ImageUrl" alt="@item.Product?.ProductName" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px;" class="me-3" />
+                                <div>
+                                    <h6 class="mb-0">@item.Product?.ProductName</h6>
+                                    <small class="text-muted">Màu: @item.Product?.Color, Size: @item.Product?.Size</small><br/>
+                                    <small class="text-muted">Đơn giá: @item.UnitPrice.ToString("N0") ₫</small>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="badge bg-secondary rounded-pill me-3">SL: @item.Quantity</span>
+                                <span class="fw-bold text-dark fs-5">@((item.UnitPrice * item.Quantity).ToString("N0")) ₫</span>
+                            </div>
+                        </li>
+                    }
+                    <li class="list-group-item d-flex justify-content-between align-items-center bg-light">
+                        <h5 class="mb-0 fw-bold">Tổng cộng:</h5>
+                        <h5 class="mb-0 fw-bold text-danger">@Model.TotalAmount.ToString("N0") ₫</h5>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Tự động chọn giá trị hiện tại của đơn hàng trong dropdown
+        document.addEventListener('DOMContentLoaded', function() {
+            var currentStatus = @((int)Model.Status); 
+            var selectElement = document.getElementById('newStatus');
+            if(selectElement) {
+                selectElement.value = currentStatus;
+            }
+        });
+    </script>
+}

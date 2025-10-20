@@ -55,7 +55,7 @@
                                     <a class="nav-link" asp-controller="UserManagement" asp-action="Index">Quản lý user</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" href="">Quản lý đơn hàng</a>
+                                    <a class="nav-link" asp-controller="OrderManagement" asp-action="Index">Quản lý đơn hàng</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" href="">Báo cáo</a>
@@ -99,7 +99,7 @@
                                         @if (User.IsInRole("Customer"))
                                         {
                                             <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index">Thông tin cá nhân</a></li>
-                                            <li><a class="dropdown-item" href="">Đơn hàng</a></li>
+                                            <li><a class="dropdown-item" asp-controller="CustomerOrder" asp-action="Index">Đơn hàng</a></li>
                                             <li><hr class="dropdown-divider" /></li>
                                         }
                                         <li>

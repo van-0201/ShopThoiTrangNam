@@ -1,0 +1,72 @@
+@model ShopThoiTrangNam.Models.Order
+@using ShopThoiTrangNam.Helpers
+
+@{
+    ViewData["Title"] = "Chi tiết đơn hàng #" + Model.OrderId;
+    bool canCancel = ((int)Model.Status == 0 || (int)Model.Status == 1);
+}
+
+<div class="container my-5">
+    <a asp-action="Index" class="btn btn-outline-secondary mb-3">← Quay lại đơn hàng của tôi</a>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Thông tin đơn hàng</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Mã đơn hàng:</strong> #@Model.OrderId</p>
+                    <p><strong>Ngày đặt:</strong> @Model.OrderDate.ToString("dd/MM/yyyy HH:mm")</p>
+                    <p><strong>Trạng thái:</strong> <strong class="h5">@Model.Status.GetStatusText()</strong></p>
+                    <hr />
+                    <p><strong>SĐT giao hàng:</strong> @Model.Phone</p>
+                    <p><strong>Địa chỉ giao hàng:</strong> @Model.ShippingAddress</p>
+                </div>
+
+                @if (canCancel)
+                {
+                    <div class="card-footer bg-light">
+                        <form asp-action="Cancel" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này? Hành động này không thể hoàn tác.');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="orderId" value="@Model.OrderId" />
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-danger">Hủy đơn hàng</button>
+                            </div>
+                        </form>
+                    </div>
+                }
+
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <h4 class="fw-semibold">Các sản phẩm trong đơn</h4>
+            <div class="card shadow-sm">
+                <ul class="list-group list-group-flush">
+                    @foreach (var item in Model.OrderDetails)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <img src="@item.Product?.ImageUrl" alt="@item.Product?.ProductName" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px;" class="me-3" />
+                                <div>
+                                    <h6 class="mb-0">@item.Product?.ProductName</h6>
+                                    <small class="text-muted">Màu: @item.Product?.Color, Size: @item.Product?.Size</small><br/>
+                                    <small class="text-muted">Đơn giá: @item.UnitPrice.ToString("N0") ₫</small>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="badge bg-secondary rounded-pill me-3">SL: @item.Quantity</span>
+                                <span class="fw-bold text-dark fs-5">@((item.UnitPrice * item.Quantity).ToString("N0")) D</span>
+                            </div>
+                        </li>
+                    }
+                    <li class="list-group-item d-flex justify-content-between align-items-center bg-light">
+                        <h5 class="mb-0 fw-bold">Tổng cộng:</h5>
+                        <h5 class="mb-0 fw-bold text-danger">@Model.TotalAmount.ToString("N0") ₫</h5>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

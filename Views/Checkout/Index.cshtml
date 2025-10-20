@@ -1,0 +1,194 @@
+@model ShopThoiTrangNam.Models.CheckoutViewModel
+@{
+    ViewData["Title"] = "Thanh toán";
+}
+
+<div class="container my-5">
+    <h2 class="fw-bold mb-4 text-center">Xác nhận thanh toán</h2>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    <form asp-action="Index" method="post">
+        @Html.AntiForgeryToken()
+        
+        <div class="row g-5">
+            <div class="col-md-6">
+                <h4 class="fw-semibold mb-3">Thông tin giao hàng</h4>
+                
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Phone" class="form-label fw-bold"></label>
+                    <input asp-for="Phone" class="form-control form-control-lg" />
+                    <span asp-validation-for="Phone" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="ShippingAddress" class="form-label fw-bold"></label>
+                    <input asp-for="ShippingAddress" class="form-control form-control-lg" />
+                    <span asp-validation-for="ShippingAddress" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="PaymentMethod" class="form-label fw-bold"></label>
+                    <select asp-for="PaymentMethod" id="paymentMethodSelect" class="form-select form-select-lg">
+                        <option value="">-- Chọn phương thức --</option>
+                        <option value="COD">Thanh toán khi nhận hàng (COD)</option>
+                        <option value="ATM">Thẻ ATM (Chưa khả dụng)</option>
+                        <option value="IB">Internet Banking (Chưa khả dụng)</option>
+                        <option value="MOMO">Ví MoMo (Chưa khả dụng)</option>
+                        <option value="VISA">Thẻ Visa/Mastercard (Chưa khả dụng)</option>
+                    </select>
+                    <div id="paymentError" class="text-danger mt-1" style="display: none; font-size: 0.9em;">
+                        Phương thức này chưa khả dụng!
+                    </div>
+                    <span asp-validation-for="PaymentMethod" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <h4 class="fw-semibold mb-3">Đơn hàng của bạn (@Model.Items.Count sản phẩm)</h4>
+                <div class="card shadow-sm border-0">
+                    <ul class="list-group list-group-flush">
+                        
+                        @for (int i = 0; i < Model.Items.Count; i++)
+                        {
+                            var item = Model.Items[i];
+                            <li class="list-group-item d-flex justify-content-between align-items-center checkout-item" 
+                                data-price="@item.Price" 
+                                data-stock="@item.StockQuantity">
+
+                                <div class="d-flex align-items-center">
+                                    <img src="@item.ImageUrl" alt="@item.ProductName" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;" class="me-3" />
+                                    <div>
+                                        <h6 class="mb-0 text-truncate" style="max-width: 250px;">@item.ProductName</h6>
+                                        <small class="text-muted">Màu: @item.Color, Size: @item.Size</small><br/>
+                                        
+                                        @if(Model.IsBuyNow)
+                                        {
+                                            <input type="hidden" asp-for="Items[i].ProductId" />
+                                            <div class="d-flex align-items-center mt-1">
+                                                <label class="form-label-sm me-2 mb-0">SL:</label>
+                                                <input type="number" asp-for="Items[i].Quantity" class="form-control form-control-sm item-quantity" 
+                                                       style="width: 80px;" min="1" max="@item.StockQuantity" />
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <small class="text-muted item-quantity-text" data-quantity="@item.Quantity">SL: @item.Quantity</small>
+                                        }
+                                        </div>
+                                </div>
+                                <span class="fw-bold text-dark item-total-display">@((item.Price * item.Quantity).ToString("N0")) ₫</span>
+                            </li>
+                        }
+                        
+                        <li class="list-group-item d-flex justify-content-between align-items-center bg-light">
+                            <h5 class="mb-0 fw-bold">Tổng cộng:</h5>
+                            <h5 class="mb-0 fw-bold text-danger" id="grand-total">@Model.TotalAmount.ToString("N0") ₫</h5>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="d-grid mt-4">
+                    <button type="submit" id="submitOrderBtn" class="btn btn-danger btn-lg py-3 fw-bold" disabled>
+                        XÁC NHẬN ĐẶT HÀNG
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            const paymentSelect = document.getElementById('paymentMethodSelect');
+            const submitButton = document.getElementById('submitOrderBtn');
+            const paymentError = document.getElementById('paymentError');
+
+            // --- Logic 1: Valid Phương thức thanh toán (Giữ nguyên) ---
+            if (paymentSelect && submitButton && paymentError) {
+                function validatePaymentMethod() {
+                    const selectedValue = paymentSelect.value;
+                    if (selectedValue === "COD") {
+                        submitButton.disabled = false;
+                        paymentError.style.display = 'none';
+                    } else if (selectedValue === "") {
+                        submitButton.disabled = true;
+                        paymentError.style.display = 'none';
+                    } else {
+                        submitButton.disabled = true;
+                        paymentError.style.display = 'block';
+                    }
+                }
+                paymentSelect.addEventListener('change', validatePaymentMethod);
+                validatePaymentMethod();
+            }
+
+            // === LOGIC 2: TỰ ĐỘNG CẬP NHẬT GIÁ TIỀN (THÊM MỚI) ===
+            function formatCurrency(number) {
+                return number.toLocaleString('vi-VN') + ' ₫';
+            }
+
+            // Hàm tính tổng
+            function updateGrandTotal() {
+                let grandTotal = 0;
+                document.querySelectorAll('.checkout-item').forEach(itemLi => {
+                    const price = parseFloat(itemLi.dataset.price);
+                    let quantity = 0;
+                    
+                    // Lấy số lượng từ input (nếu là Buy Now)
+                    const qtyInput = itemLi.querySelector('.item-quantity');
+                    if (qtyInput) {
+                        quantity = parseInt(qtyInput.value) || 1;
+                    } 
+                    // Lấy số lượng từ text (nếu là Cart)
+                    else { 
+                        const qtyText = itemLi.querySelector('.item-quantity-text');
+                        if (qtyText) {
+                            quantity = parseInt(qtyText.dataset.quantity) || 1;
+                        }
+                    }
+                    
+                    grandTotal += price * quantity;
+                });
+                
+                document.getElementById('grand-total').textContent = formatCurrency(grandTotal);
+            }
+
+            // Gắn sự kiện cho ô nhập số lượng (chỉ có ở "Buy Now")
+            const qtyInput = document.querySelector('.item-quantity');
+            if (qtyInput) {
+                qtyInput.addEventListener('input', function() {
+                    const itemLi = this.closest('.checkout-item');
+                    const price = parseFloat(itemLi.dataset.price);
+                    const stock = parseInt(itemLi.dataset.stock);
+                    let newQty = parseInt(this.value);
+
+                    if (isNaN(newQty)) newQty = 1;
+                    if (newQty > stock) {
+                        newQty = stock;
+                        this.value = stock;
+                    }
+                    if (newQty < 1) {
+                        newQty = 1;
+                        this.value = 1;
+                    }
+                    
+                    // Cập nhật tổng của riêng item đó
+                    const itemTotalEl = itemLi.querySelector('.item-total-display');
+                    itemTotalEl.textContent = formatCurrency(price * newQty);
+                    
+                    // Cập nhật tổng cộng của toàn bộ đơn hàng
+                    updateGrandTotal();
+                });
+            }
+        });
+    </script>
+}

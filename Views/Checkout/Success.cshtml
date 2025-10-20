@@ -1,0 +1,44 @@
+@model ShopThoiTrangNam.Models.Order
+@using ShopThoiTrangNam.Helpers 
+
+@{
+    ViewData["Title"] = "Đặt hàng thành công";
+}
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2 text-center">
+            
+            <div class="alert alert-success p-4 p-md-5 shadow-sm" role="alert">
+                <h2 class="alert-heading display-6 fw-bold">🎉 Đặt hàng thành công!</h2>
+                <p class="lead">Cảm ơn bạn đã tin tưởng mua hàng.</p>
+                <hr>
+                <p class="mb-1">Mã đơn hàng của bạn là: <strong class="h5">#@Model.OrderId</strong></p>
+                
+                <p class="mb-1">Trạng thái: <strong class="h5 text-info">@Model.Status.GetStatusText()</strong></p>
+                <p class="mb-1">Tổng tiền: <strong class="text-danger h5">@Model.TotalAmount.ToString("N0") ₫</strong></p>
+                <p class="mb-0">Chúng tôi sẽ liên hệ với bạn qua SĐT <strong>@Model.Phone</strong> để giao hàng tới địa chỉ: <strong>@Model.ShippingAddress</strong>.</p>
+            </div>
+            
+            <div class="mt-4">
+                <a asp-controller="Store" asp-action="Index" class="btn btn-primary btn-lg px-5">Tiếp tục mua sắm</a>
+            </div>
+
+            <h5 class="mt-5 text-start fw-bold">Chi tiết đơn hàng:</h5>
+            <ul class="list-group text-start shadow-sm">
+                @foreach (var detail in Model.OrderDetails)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <img src="@detail.Product.ImageUrl" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;" class="me-2" />
+                            @detail.Product.ProductName 
+                            <small class="text-muted">(@detail.Product.Color / @detail.Product.Size)</small>
+                        </div>
+                        <span class="badge bg-secondary rounded-pill">SL: @detail.Quantity</span>
+                    </li>
+                }
+            </ul>
+
+        </div>
+    </div>
+</div>

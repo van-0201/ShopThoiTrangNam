@@ -1,0 +1,51 @@
+@model IEnumerable<ShopThoiTrangNam.Models.Order>
+@using ShopThoiTrangNam.Helpers
+
+@{
+    ViewData["Title"] = "Quản lý đơn hàng";
+}
+
+<div class="container my-5">
+    <h2 class="fw-bold mb-4 text-center">Quản lý đơn hàng</h2>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+
+    <table class="table table-hover table-bordered align-middle shadow-sm">
+        <thead class="table-dark text-center">
+            <tr>
+                <th>Mã ĐH</th>
+                <th>Khách hàng</th>
+                <th>Ngày đặt</th>
+                <th>Địa chỉ</th>
+                <th>SĐT</th>
+                <th>Tổng tiền</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model)
+            {
+                <tr>
+                    <td class="text-center fw-bold">#@order.OrderId</td>
+                    <td>@order.User.Email</td>
+                    <td>@order.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td class="text-truncate" style="max-width: 200px;">@order.ShippingAddress</td>
+                    <td>@order.Phone</td>
+                    <td class="text-end fw-bold text-danger">@order.TotalAmount.ToString("N0") ₫</td>
+                    <td class="text-center fw-semibold">
+                        @order.Status.GetStatusText()
+                    </td>
+                    <td class="text-center">
+                        <a asp-action="Details" asp-route-id="@order.OrderId" class="btn btn-primary btn-sm">
+                            Xem
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
