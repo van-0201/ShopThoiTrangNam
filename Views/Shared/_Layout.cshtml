@@ -1,4 +1,4 @@
-﻿@* 1. THÊM RAZOR HELPER: Hàm cắt chuỗi *@
+﻿﻿@* 1. THÊM RAZOR HELPER: Hàm cắt chuỗi *@
 @functions {
     public string TruncateName(string text, int maxLength = 15)
     {
@@ -58,7 +58,7 @@
                                     <a class="nav-link" asp-controller="OrderManagement" asp-action="Index">Quản lý đơn hàng</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" href="">Báo cáo</a>
+                                    <a class="nav-link" asp-controller="Report" asp-action="Index">Báo cáo</a>
                                 </li>
                             }
                             else
