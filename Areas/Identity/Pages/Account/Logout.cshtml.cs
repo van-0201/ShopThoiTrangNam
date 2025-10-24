@@ -13,6 +13,7 @@ using ShopThoiTrangNam.Models;
 
 namespace ShopThoiTrangNam.Areas.Identity.Pages.Account
 {
+    [Authorize]
     public class LogoutModel : PageModel
     {
         private readonly SignInManager<ApplicationUser> _signInManager;

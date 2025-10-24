@@ -4,7 +4,7 @@
     ViewData["Title"] = Model.ProductName;
     var related = ViewBag.RelatedProducts as List<ShopThoiTrangNam.Models.Product>;
     var variants = ViewBag.Variants as List<ShopThoiTrangNam.Models.Product>;
-// Lấy ProductId gốc để truyền vào JS
+    // Lấy ID gốc (sản phẩm cha) để tìm kiếm các biến thể
     var rootProductId = Model.ParentProductId ?? Model.ProductId;
 }
 
@@ -12,23 +12,23 @@
     /* Ô chọn màu/size */
     .option-box {
         display: inline-block;
-border: 2px solid #ddd;
+        border: 2px solid #ddd;
         border-radius: 8px;
         padding: 8px 16px;
         margin: 5px 6px 5px 0;
         cursor: pointer;
         user-select: none;
-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
         background-color: #fff;
         font-size: 14px;
     }
     .option-box:hover {
         border-color: #007bff;
-box-shadow: 0 0 6px rgba(0, 123, 255, 0.3);
+        box-shadow: 0 0 6px rgba(0, 123, 255, 0.3);
     }
     .option-box.active {
         border-color: #007bff;
-background-color: #007bff;
+        background-color: #007bff;
         color: #fff;
         font-weight: 600;
         transform: scale(1.03);
@@ -37,24 +37,24 @@ background-color: #007bff;
     /* Mô tả sản phẩm */
     .product-description {
         background-color: #fafafa;
-border: 1px solid #eee;
+        border: 1px solid #eee;
         border-radius: 10px;
         padding: 20px;
         margin-top: 35px;
         line-height: 1.6;
         font-size: 15px;
         color: #444;
-}
+    }
     .product-description h5 {
         font-weight: 600;
         margin-bottom: 12px;
         color: #222;
-}
+    }
 
     /* Sản phẩm liên quan */
     .related-title {
         font-weight: 600;
-font-size: 18px;
+        font-size: 18px;
         margin-bottom: 12px;
     }
 </style>
@@ -77,8 +77,7 @@ alt="@Model.ProductName" />
              <div id="colorOptions" class="d-flex flex-wrap"> 
                     @foreach (var c in variants.Select(v => v.Color).Where(c => !string.IsNullOrEmpty(c)).Distinct())
                     {
-                        var isActive = c == Model.Color ?
-"active" : "";
+                        var isActive = c == Model.Color ? "active" : "";
                         <div class="option-box color-option @isActive" data-color="@c" data-option-type="color">@c</div>
                     }
                 </div>
@@ -90,8 +89,7 @@ alt="@Model.ProductName" />
     <div id="sizeOptions" class="d-flex flex-wrap"> 
                     @foreach (var s in variants.Select(v => v.Size).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s))
                     {
-                        var isActive = s == Model.Size ?
-"active" : "";
+                        var isActive = s == Model.Size ? "active" : "";
                         <div class="option-box size-option @isActive" data-size="@s" data-option-type="size">@s</div>
                     }
                 </div>
@@ -105,7 +103,7 @@ alt="@Model.ProductName" />
                 
                 <a href="#" id="buyNowBtn" class="btn btn-outline-danger px-4">Mua ngay</a>
                 </div>
-        </div>
+         </div>
     </div>
 
     @if (!string.IsNullOrEmpty(Model.Description))
@@ -128,12 +126,10 @@ alt="@Model.ProductName" />
                     <div class="col">
                         <div class="card h-100 border-0 shadow-sm">
                    
-         <img src="@item.ImageUrl" class="card-img-top" alt="@item.ProductName" style="height: 320px;
-object-fit: cover;" />
+         <img src="@item.ImageUrl" class="card-img-top" alt="@item.ProductName" style="height: 320px; object-fit: cover;" />
                             <div class="card-body text-center p-2">
                                 <h6 class="fw-bold text-truncate">@item.ProductName</h6>
-                                <p 
-class="text-danger fw-semibold mb-1">@item.Price.ToString("N0") ₫</p>
+                                <p class="text-danger fw-semibold mb-1">@item.Price.ToString("N0") ₫</p>
                                 <a asp-controller="Store" asp-action="Details" asp-route-id="@item.ProductId"
                                    class="btn btn-outline-primary btn-sm w-100">Xem</a>
                         
@@ -148,178 +144,190 @@ class="text-danger fw-semibold mb-1">@item.Price.ToString("N0") ₫</p>
 
 @section Scripts {
 <script>
+    // Chờ DOM tải xong
     document.addEventListener('DOMContentLoaded', function () {
    
-     // ID gốc của nhóm sản phẩm
+        // ID gốc của nhóm sản phẩm (sản phẩm cha)
         const rootProductId = @rootProductId;
+        
+        // Lấy các element DOM
         const productImage = document.getElementById('productImage');
         const productPrice = document.getElementById('productPrice');
         const productStock = document.getElementById('productStock');
-const addToCartBtn = document.getElementById('addToCartBtn');
+        const addToCartBtn = document.getElementById('addToCartBtn');
         const allOptionBoxes = document.querySelectorAll('.option-box');
         
-        // --- CHỨC NĂNG CHUNG ---
-        
+        /**
+         * Lấy màu sắc và kích cỡ đang được chọn
+         */
         function getSelectedOptions() {
             const activeColor = document.querySelector(".color-option.active");
-const activeSize = document.querySelector(".size-option.active");
+            const activeSize = document.querySelector(".size-option.active");
 
             return {
-                color: activeColor ?
-activeColor.dataset.color : null,
-                size: activeSize ?
-activeSize.dataset.size : null
+                color: activeColor ? activeColor.dataset.color : null,
+                size: activeSize ? activeSize.dataset.size : null
             };
-}
+        }
 
-        // --- 1. TÌM BIẾN THỂ (UPDATE VARIANT) - SỬ DỤNG FETCH API ---
-        
+        /**
+         * Gọi API để lấy thông tin biến thể (variant)
+         */
         async function updateVariant() {
             const { color, size } = getSelectedOptions();
-// Chỉ tìm biến thể khi cả màu và size đã được chọn
+
+            // Nếu chưa chọn đủ, reset về thông tin gốc
             if (!color || !size) {
                 productStock.textContent = "@Model.StockQuantity.ToString()";
-// Hiển thị tồn kho mặc định của sản phẩm gốc (nếu có)
                 addToCartBtn.disabled = @(Model.StockQuantity == 0 ? "true" : "false");
-// Giữ lại ProductId mặc định cho đến khi chọn biến thể
                 addToCartBtn.dataset.productId = @Model.ProductId;
-return;
+                return;
             }
 
-            // Dùng ProductId gốc để tìm các biến thể
+            // Gọi API 'GetVariant'
             const url = `@Url.Action("GetVariant", "Store")?parentId=${rootProductId}&color=${color}&size=${size}`;
-try {
+            try {
                 const response = await fetch(url);
-if (!response.ok) {
-                    throw new Error(`Lỗi HTTP! Status: ${response.status}`);
-}
+                if (!response.ok) throw new Error(`Lỗi HTTP! Status: ${response.status}`);
                 
                 const data = await response.json();
-// Phản hồi từ controller trả về JSON
 
-                if (data && data.productId > 0) { // Kiểm tra data.productId để đảm bảo biến thể được tìm thấy
-                    // Cập nhật thông tin sản phẩm
+                // Nếu tìm thấy biến thể
+                if (data && data.productId > 0) { 
                     productImage.src = data.imageUrl;
-productPrice.textContent = data.price + " ₫";
+                    productPrice.textContent = data.price + " ₫";
                     productStock.textContent = data.stockQuantity;
                     
-                    // Cập nhật ProductId và trạng thái cho nút "Thêm vào giỏ"
-                    addToCartBtn.dataset.productId = data.productId;
-addToCartBtn.disabled = data.stockQuantity === 0;
+                    // Cập nhật nút "Thêm vào giỏ"
+                    addToCartBtn.dataset.productId = data.productId; 
+                    addToCartBtn.disabled = data.stockQuantity === 0; 
                     
                     if (data.stockQuantity === 0) {
                         productStock.textContent = "0 (Hết hàng)";
-}
+                    }
                 } else {
                     // Nếu không tìm thấy biến thể khớp
                     productStock.textContent = "0 (Hết hàng)";
-addToCartBtn.disabled = true;
-                    addToCartBtn.dataset.productId = 0; // Đặt về 0 để ngăn thêm vào giỏ
+                    addToCartBtn.disabled = true;
+                    addToCartBtn.dataset.productId = 0; 
                 }
             } catch (error) {
                 console.error("Lỗi khi tải biến thể:", error);
-productStock.textContent = "Lỗi tải dữ liệu";
+                productStock.textContent = "Lỗi tải dữ liệu";
                 addToCartBtn.disabled = true;
             }
         }
         
-        // --- 2. THÊM VÀO GIỎ HÀNG (ADD TO CART) - SỬ DỤNG FETCH API ---
-
+        /**
+         * Xử lý khi nhấn nút "Thêm vào giỏ hàng"
+         */
         async function addToCartHandler() {
             const productId = parseInt(addToCartBtn.dataset.productId);
-if (productId <= 0 || addToCartBtn.disabled) {
+
+            // Kiểm tra biến thể hợp lệ
+            if (productId <= 0 || addToCartBtn.disabled) {
                 alert("Vui lòng chọn biến thể sản phẩm hợp lệ và còn hàng.");
-return;
+                return;
             }
 
             const quantity = 1;
-const url = '@Url.Action("AddToCart", "ShoppingCart")';
+            const url = '@Url.Action("AddToCart", "ShoppingCart")';
             
             const formData = new URLSearchParams();
-formData.append('productId', productId);
+            formData.append('productId', productId);
             formData.append('quantity', quantity);
 
             try {
-const response = await fetch(url, {
+                // Gọi API AddToCart
+                const response = await fetch(url, {
                     method: 'POST',
-                    body: formData 
+                    body: formData,
+                    headers: {
+                        // Header này giúp Program.cs nhận diện là AJAX
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
                 });
-if (!response.ok) {
-                    if (response.status === 401) {
+
+                // Xử lý các mã lỗi HTTP
+                if (!response.ok) {
+                    if (response.status === 401) { // 401 = Chưa đăng nhập
                         alert("Bạn phải đăng nhập để thêm sản phẩm vào giỏ hàng!");
-return;
+                        return;
+                    }
+                    if (response.status === 403) { // 403 = Sai quyền
+                        alert("Tài khoản của bạn không có quyền thực hiện việc này!");
+                        return;
                     }
                     throw new Error(`HTTP error! status: ${response.status}`);
-}
+                }
 
+                // Nếu request thành công
                 const data = await response.json();
-if (data.success) {
+                if (data.success) {
+                    // Cập nhật icon giỏ hàng
                     const cartCountBadge = document.getElementById('cart-count-badge');
-if (cartCountBadge) {
+                    if (cartCountBadge) {
                         cartCountBadge.textContent = data.cartCount;
-}
+                    }
                     alert("Đã thêm vào giỏ hàng!");
-} else {
+                } else {
                     alert(data.message || "Có lỗi xảy ra!");
-}
+                }
             } catch (error) {
                 console.error("Lỗi Fetch/Server:", error);
-alert("Lỗi server, vui lòng thử lại.");
+                alert("Lỗi server, vui lòng thử lại.");
             }
         }
 
-        // --- 3. XỬ LÝ MUA NGAY ---
+        /**
+         * Xử lý khi nhấn nút "Mua Ngay"
+         */
         const buyNowBtn = document.getElementById('buyNowBtn');
-
         if (buyNowBtn) {
             buyNowBtn.addEventListener('click', function(e) {
-                e.preventDefault(); // Ngăn link mặc định
+                e.preventDefault(); 
                 
-                // Lấy productId và trạng thái từ nút "Thêm vào giỏ"
-                // (vì nút đó đã được cập nhật bởi hàm updateVariant())
+                // Lấy thông tin biến thể từ nút "Thêm vào giỏ"
                 const productId = parseInt(addToCartBtn.dataset.productId);
                 const isDisabled = addToCartBtn.disabled;
-                
-                // Giả sử "Mua ngay" luôn là 1 sản phẩm
                 const quantity = 1; 
 
                 if (productId <= 0 || isDisabled) {
                     alert("Vui lòng chọn biến thể sản phẩm hợp lệ và còn hàng.");
                     return;
                 }
-                
-                // Chuyển hướng đến trang Thanh toán với
-                // thông số của sản phẩm "Buy Now"
+                 
+                // Chuyển hướng đến trang Thanh toán
                 const url = `@Url.Action("Index", "Checkout")?productId=${productId}&quantity=${quantity}`;
-                
-                // Chuyển người dùng đến trang checkout
                 window.location.href = url;
             });
         }
-        // --- THIẾT LẬP SỰ KIỆN ---
 
-        // 1. Lắng nghe sự kiện click cho các ô tùy chọn (màu/size)
+        // --- THIẾT LẬP SỰ KIỆN BAN ĐẦU ---
+
+        // 1. Gán sự kiện 'click' cho các ô chọn
         allOptionBoxes.forEach(box => {
             box.addEventListener("click", function () {
-                const optionType = 
-this.dataset.optionType; 
+                const optionType = this.dataset.optionType; 
                 
+                // Xóa 'active' ở các ô cùng loại
                 document.querySelectorAll(`.${optionType}-option`).forEach(opt => {
                     opt.classList.remove("active");
                 });
     
-            
+                // Thêm 'active' cho ô vừa nhấn
                 this.classList.add("active");
                 
+                // Cập nhật biến thể
                 updateVariant();
             });
-      
-  });
+        });
         
-        // 2. Lắng nghe sự kiện click cho nút "Thêm vào giỏ"
+        // 2. Gán sự kiện 'click' cho nút "Thêm vào giỏ"
         addToCartBtn.addEventListener('click', addToCartHandler);
-// Gọi lần đầu để đảm bảo hiển thị đúng trạng thái tồn kho của biến thể hiện tại
+
+        // 3. Chạy hàm update 1 lần khi tải trang
         updateVariant();
-});
+    });
 </script>
 }
