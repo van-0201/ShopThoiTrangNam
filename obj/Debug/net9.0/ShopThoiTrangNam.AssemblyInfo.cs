@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ShopThoiTrangNam")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c0cafd5911d0e18b90ef2a5d8b653286881a660f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6b21312e7f4ba3f62ab547378d823a3d4271b56d")]
 [assembly: System.Reflection.AssemblyProductAttribute("ShopThoiTrangNam")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ShopThoiTrangNam")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

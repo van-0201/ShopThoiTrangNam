@@ -17,13 +17,13 @@ namespace ShopThoiTrangNam.Controllers
         }
 
         // Trang danh sách sản phẩm
-        public async Task<IActionResult> Index(int? categoryId)
+        public async Task<IActionResult> Index(int? categoryId, string searchString) 
         {
             var categories = await _context.Categories.ToListAsync();
             ViewBag.Categories = categories;
             ViewBag.SelectedCategory = categoryId;
+            ViewBag.CurrentSearch = searchString; 
 
-            // 1. Lọc sản phẩm theo CategoryId (nếu có) trước khi gom nhóm
             var productsQuery = _context.Products.AsQueryable();
 
             if (categoryId.HasValue)
@@ -31,30 +31,30 @@ namespace ShopThoiTrangNam.Controllers
                 productsQuery = productsQuery.Where(p => p.CategoryId == categoryId.Value);
             }
 
-            // 2. Lấy tất cả các ID của sản phẩm cha (ParentProductId)
-            // Nếu sản phẩm không có ParentProductId (là sản phẩm gốc), thì dùng chính ProductId
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                productsQuery = productsQuery.Where(p => p.ProductName.Contains(searchString));
+            }
+
             var productIdsToGroup = productsQuery
                 .Select(p => p.ParentProductId.HasValue ? p.ParentProductId.Value : p.ProductId)
                 .Distinct();
 
-            // 3. Lấy ra sản phẩm đại diện đầu tiên cho mỗi nhóm ParentProductId/ProductId gốc
-            // Lấy tất cả sản phẩm thuộc các nhóm đã lọc từ cơ sở dữ liệu
             var allProductsInGroups = await _context.Products
                 .Where(p => productIdsToGroup.Contains(p.ParentProductId.HasValue ? p.ParentProductId.Value : p.ProductId))
                 .Include(p => p.Category)
                 .ToListAsync();
 
-            // 4. Gom nhóm và chỉ lấy sản phẩm đầu tiên của mỗi nhóm để hiển thị
             var groupedProducts = allProductsInGroups
-                .GroupBy(p => p.ParentProductId.HasValue ? p.ParentProductId.Value : p.ProductId) // Gom nhóm theo ID cha/gốc
-                .Select(g => g.First()) // Chỉ lấy sản phẩm đầu tiên trong mỗi nhóm (làm đại diện)
+                .GroupBy(p => p.ParentProductId.HasValue ? p.ParentProductId.Value : p.ProductId) 
+                .Select(g => g.First()) 
                 .ToList();
 
             return View(groupedProducts);
         }
 
 
-        // Trang chi tiết sản phẩm (Giữ nguyên logic gom nhóm)
+        // Trang chi tiết sản phẩm
         public async Task<IActionResult> Details(int id)
         {
             var product = await _context.Products
@@ -80,7 +80,7 @@ namespace ShopThoiTrangNam.Controllers
             return View(product);
         }
 
-        // API lấy biến thể theo màu và size (Giữ nguyên logic)
+        // API lấy biến thể theo màu và size
         public async Task<JsonResult> GetVariant(int parentId, string color, string size)
         {
             var currentProduct = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == parentId);
@@ -103,6 +103,25 @@ namespace ShopThoiTrangNam.Controllers
                 stockQuantity = variant.StockQuantity,
                 imageUrl = variant.ImageUrl
             });
+        }
+        
+        // API GỢI Ý TÌM KIẾM (AUTOCOMPLETE)
+        [HttpGet]
+        public async Task<JsonResult> SearchSuggest(string term)
+        {
+            if (string.IsNullOrEmpty(term) || term.Length < 2)
+            {
+                return Json(new List<string>());
+            }
+
+            var suggestions = await _context.Products
+                .Where(p => p.ProductName.Contains(term) && p.ParentProductId == null) 
+                .Select(p => p.ProductName) // Chỉ chọn tên
+                .Distinct()                 // Lọc trùng lặp
+                .Take(10)                   // Giới hạn 10 kết quả
+                .ToListAsync();
+
+            return Json(suggestions);
         }
     }
 }

@@ -21,6 +21,41 @@
 
     <link rel="stylesheet" href="~/css/site.css" />
 
+    <style>
+        .search-suggestion-container {
+            position: relative;
+        }
+
+        .search-suggestions {
+            position: absolute;
+            top: 100%; 
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            border: 1px solid #ddd;
+            border-top: none;
+            background-color: #fff;
+            border-radius: 0 0 .25rem .25rem;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .suggestion-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-item:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
+
     @RenderSection("Styles", required: false)
 </head>
 <body>
@@ -28,6 +63,7 @@
         <header>
             <nav class="navbar navbar-expand-lg navbar-dark bg-black">
                 <div class="container">
+         
                     <a class="navbar-brand d-flex align-items-center" asp-controller="Home" asp-action="Index">
                         <img src="~/Icons/IconLogo.png" alt="Logo" style="height:40px; width:auto; margin-right:8px;" />
                         Shop Thời Trang Nam
@@ -35,11 +71,13 @@
 
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                         <span class="navbar-toggler-icon"></span>
+    
                     </button>
 
                     <div class="collapse navbar-collapse" id="navbarNav">
                         <ul class="navbar-nav me-auto">
                             <li class="nav-item">
+      
                                 <a class="nav-link" asp-controller="Home" asp-action="Index">Trang chủ</a>
                             </li>
 
@@ -47,84 +85,119 @@
                             {
                                 <li class="nav-item">
                                     <a class="nav-link" asp-controller="Products" asp-action="Index">Sản phẩm</a>
+          
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" asp-controller="Categories" asp-action="Index">Danh mục</a>
+     
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" asp-controller="UserManagement" asp-action="Index">Quản lý user</a>
                                 </li>
                                 <li class="nav-item">
+                                  
                                     <a class="nav-link" asp-controller="OrderManagement" asp-action="Index">Quản lý đơn hàng</a>
                                 </li>
                                 <li class="nav-item">
+                           
                                     <a class="nav-link" asp-controller="Report" asp-action="Index">Báo cáo</a>
                                 </li>
                             }
+                           
                             else
                             {
                                 <li class="nav-item">
                                     <a class="nav-link" asp-controller="Store" asp-action="Index">Sản phẩm</a>
                                 </li>
                                 <li class="nav-item">
+                                 
                                     <a class="nav-link" href="">Giới thiệu</a>
                                 </li>
                                 <li class="nav-item">
+                             
                                     <a class="nav-link" href="">Liên hệ</a>
                                 </li>
                             }
                         </ul>
 
+      
                         <div class="d-flex align-items-center">
                             @if (User?.IsInRole("Customer") == true)
                             {
-                                <form class="d-flex me-3" role="search">
-                                    <input class="form-control me-2" type="search" placeholder="Tìm sản phẩm" />
-                                    <button class="btn btn-outline-success" type="submit">Tìm</button>
-                                </form>
+                                <div class="search-suggestion-container me-3">
+                                    <form class="d-flex" 
+                                          role="search" 
+                                          id="searchForm"
+                                          asp-controller="Store" 
+                                          asp-action="Index" 
+                                          method="get">
+                                        
+                                        <input class="form-control me-2" 
+                                               type="search" 
+                                               placeholder="Tìm sản phẩm" 
+                                               name="searchString" 
+                                               id="searchInput"  @* <-- Thêm ID *@
+                                               value="@ViewBag.CurrentSearch" 
+                                               autocomplete="off" /> @* <-- Tắt autocomplete mặc định *@
+                                               
+                                        <button class="btn btn-outline-success" type="submit">Tìm</button>
+                                    </form>
+                                    
+                                    <div id="searchSuggestions" class="search-suggestions"></div>
+                                </div>
                             }
 
                             <div class="dropdown me-3">
+              
                                 <a class="d-flex align-items-center btn btn-outline-light dropdown-toggle" href="#" role="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                     <img src="~/Icons/IconAccount.png" alt="Account" class="rounded-circle" style="width:32px; height:32px; object-fit:cover;" />
                                     @if (User?.Identity?.IsAuthenticated == true)
                                     {
-                                        // 👈 Thay đổi ở đây: Gọi hàm TruncateName
                                         <span class="ms-2">Hello, @TruncateName(User.Identity.Name)!</span>
                                     }
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuDropdown">
+                              
                                     @if (User?.Identity?.IsAuthenticated == true)
                                     {
                                         @if (User.IsInRole("Customer"))
                                         {
                                             <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index">Thông tin cá nhân</a></li>
+                        
                                             <li><a class="dropdown-item" asp-controller="CustomerOrder" asp-action="Index">Đơn hàng</a></li>
                                             <li><hr class="dropdown-divider" /></li>
+                              
                                         }
                                         <li>
                                             <form method="post" asp-area="Identity" asp-page="/Account/Logout" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn đăng xuất?');">
                                                 <button type="submit" class="dropdown-item">Đăng xuất</button>
+                                            
                                             </form>
                                         </li>
                                     }
+                        
                                     else
                                     {
                                         <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Login">Đăng nhập</a></li>
+        
                                         <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Register">Đăng ký</a></li>
                                     }
+                            
                                 </ul>
                             </div>
 
                             @if (User?.Identity?.IsAuthenticated == true && !User.IsInRole("Admin"))
                             {
+       
                                 <a class="btn btn-outline-warning position-relative" asp-controller="ShoppingCart" asp-action="Index">
                                     <img src="~/Icons/IconGioHang.png" alt="Cart" style="width:20px; height:20px;" />
                                     <span id="cart-count-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                                         @await Component.InvokeAsync("CartCount") @* <-- GỌI VIEW COMPONENT *@
+        
                                     </span>
                                 </a>
                             }
+            
                         </div>
                     </div>
                 </div>
@@ -135,12 +208,82 @@
             @RenderBody()
         </main>
 
+ 
         <footer class="footer bg-dark text-white p-4 text-center">
             &copy; 2025 Shop Thời Trang Nam | Email: info@shopthoitrangnam.com | Tel: 0123456789
         </footer>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('searchInput');
+            const suggestionsContainer = document.getElementById('searchSuggestions');
+            const searchForm = document.getElementById('searchForm');
+            let debounceTimer;
+
+            if (searchInput) {
+                searchInput.addEventListener('keyup', function () {
+                    const term = searchInput.value.trim();
+                    
+                    // Hủy timer cũ (nếu có) để tránh gọi API liên tục
+                    clearTimeout(debounceTimer);
+                    
+                    if (term.length < 2) {
+                        suggestionsContainer.innerHTML = '';
+                        suggestionsContainer.style.display = 'none';
+                        return;
+                    }
+
+                    // Đặt timer mới (debounce) 300ms
+                    debounceTimer = setTimeout(async () => {
+                        try {
+                            const url = `@Url.Action("SearchSuggest", "Store")?term=${encodeURIComponent(term)}`;
+                            const response = await fetch(url);
+                            if (!response.ok) return;
+
+                            const suggestions = await response.json();
+
+                            if (suggestions && suggestions.length > 0) {
+                                let html = '';
+                                suggestions.forEach(item => {
+                                    // Tạo item, gán sự kiện click
+                                    html += `<div class="suggestion-item" data-value="${item}">${item}</div>`;
+                                });
+                                suggestionsContainer.innerHTML = html;
+                                suggestionsContainer.style.display = 'block';
+                            } else {
+                                suggestionsContainer.innerHTML = '';
+                                suggestionsContainer.style.display = 'none';
+                            }
+                        } catch (error) {
+                            console.error("Lỗi khi tải gợi ý:", error);
+                            suggestionsContainer.style.display = 'none';
+                        }
+                    }, 300); 
+                });
+
+                // Xử lý khi click vào một gợi ý
+                suggestionsContainer.addEventListener('click', function (e) {
+                    if (e.target && e.target.classList.contains('suggestion-item')) {
+                        const selectedValue = e.target.dataset.value;
+                        searchInput.value = selectedValue; // Điền vào ô input
+                        suggestionsContainer.style.display = 'none'; // Ẩn gợi ý
+                        searchForm.submit(); // Tự động tìm kiếm
+                    }
+                });
+
+                // Ẩn gợi ý khi click ra ngoài
+                document.addEventListener('click', function (e) {
+                    if (e.target !== searchInput && e.target !== suggestionsContainer) {
+                        suggestionsContainer.style.display = 'none';
+                    }
+                });
+            }
+        });
+    </script>
+    
     @RenderSection("Scripts", required: false)
 </body>
 </html>
