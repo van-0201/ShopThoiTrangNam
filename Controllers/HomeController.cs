@@ -38,6 +38,12 @@ namespace ShopThoiTrangNam.Controllers
             return View(model);
         }
 
+        public IActionResult About()
+        {
+            ViewData["Title"] = "Giới thiệu";
+            return View();
+        }
+
         public IActionResult Privacy()
         {
             return View();
